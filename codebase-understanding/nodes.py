@@ -7,6 +7,13 @@ from utils.call_llm import call_llm
 from utils.crawl_local_files import crawl_local_files
 
 
+# Helper to add line numbers to code content
+def add_line_numbers(text: str) -> str:
+    """Prefix each line of text with its line number."""
+    lines = text.splitlines()
+    return "\n".join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
+
+
 
 # Helper to get content for specific file indices
 def get_content_for_indices(files_data, indices):
@@ -97,7 +104,8 @@ class IdentifyAbstractions(Node):
             context = ""
             file_info = []  # Store tuples of (index, path)
             for i, (path, content) in enumerate(files_data):
-
+                numbered = add_line_numbers(content)
+                entry = f"--- File Index {i}: {path} ---\n{numbered}\n\n"
                 context += entry
                 file_info.append((i, path))
 
