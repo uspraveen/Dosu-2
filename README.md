@@ -29,7 +29,7 @@ python codebase-understanding/main.py --dir /path/to/project
 ```
 
 This process downloads or reads the code, identifies abstractions and relationships, then produces tutorial chapters inside the directory specified by `--output` (default: `./output`).
-All code snippets sent to the LLM include line numbers so that the generated tutorials can reference specific lines.
+
 
 ### Common options
 
