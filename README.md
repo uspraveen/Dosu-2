@@ -30,6 +30,7 @@ python codebase-understanding/main.py --dir /path/to/project
 
 This process downloads or reads the code, identifies abstractions and relationships, then produces tutorial chapters inside the directory specified by `--output` (default: `./output`).
 
+
 ### Common options
 
 * `--include` / `--exclude` – glob patterns controlling which files are processed.

@@ -7,6 +7,7 @@ from utils.call_llm import call_llm
 from utils.crawl_local_files import crawl_local_files
 
 
+
 # Helper to get content for specific file indices
 def get_content_for_indices(files_data, indices):
     content_map = {}
@@ -14,7 +15,7 @@ def get_content_for_indices(files_data, indices):
         if 0 <= i < len(files_data):
             path, content = files_data[i]
             content_map[f"{i} # {path}"] = (
-                content  # Use index + path as key for context
+
             )
     return content_map
 
@@ -94,7 +95,7 @@ class IdentifyAbstractions(Node):
             context = ""
             file_info = []  # Store tuples of (index, path)
             for i, (path, content) in enumerate(files_data):
-                entry = f"--- File Index {i}: {path} ---\n{content}\n\n"
+
                 context += entry
                 file_info.append((i, path))
 
@@ -142,6 +143,7 @@ For the project `{project_name}`:
 
 Codebase Context:
 {context}
+
 
 {language_instruction}Analyze the codebase context.
 Identify the top 5-{max_abstraction_num} core most important abstractions to help those new to the codebase.
@@ -314,6 +316,7 @@ List of Abstraction Indices and Names{list_lang_note}:
 
 Context (Abstractions, Descriptions, Code):
 {context}
+
 
 {language_instruction}Please provide:
 1. A high-level `summary` of the project's main purpose and functionality in a few beginner-friendly sentences{lang_hint}. Use markdown formatting with **bold** and *italic* text to highlight important concepts.
@@ -691,6 +694,7 @@ Context from previous chapters{prev_summary_note}:
 
 Relevant Code Snippets (Code itself remains unchanged):
 {file_context_str if file_context_str else "No specific code snippets provided for this abstraction."}
+
 
 Instructions for the chapter (Generate content in {language.capitalize()} unless specified otherwise):
 - Start with a clear heading (e.g., `# Chapter {chapter_num}: {abstraction_name}`). Use the provided concept name.
