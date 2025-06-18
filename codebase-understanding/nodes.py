@@ -10,13 +10,15 @@ from utils.crawl_local_files import crawl_local_files
 
 # Helper to get content for specific file indices
 def get_content_for_indices(files_data, indices):
+    """Return a mapping of file index/path to numbered content."""
     content_map = {}
     for i in indices:
         if 0 <= i < len(files_data):
             path, content = files_data[i]
-            content_map[f"{i} # {path}"] = (
-
-            )
+            numbered = []
+            for j, line in enumerate(content.splitlines(), 1):
+                numbered.append(f"{j:4d}: {line}")
+            content_map[f"{i} # {path}"] = "\n".join(numbered)
     return content_map
 
 
@@ -141,7 +143,7 @@ class IdentifyAbstractions(Node):
         prompt = f"""
 For the project `{project_name}`:
 
-Codebase Context:
+ Codebase Context (lines prefixed with their numbers):
 {context}
 
 
@@ -267,7 +269,7 @@ class AnalyzeRelationships(Node):
             )  # Use potentially translated name here too
             all_relevant_indices.update(abstr["files"])
 
-        context += "\\nRelevant File Snippets (Referenced by Index and Path):\\n"
+        context += "\\nRelevant File Snippets with line numbers (Referenced by Index and Path):\\n"
         # Get content for relevant files using helper
         relevant_files_content_map = get_content_for_indices(
             files_data, sorted(list(all_relevant_indices))
@@ -314,7 +316,7 @@ Based on the following abstractions and relevant code snippets from the project 
 List of Abstraction Indices and Names{list_lang_note}:
 {abstraction_listing}
 
-Context (Abstractions, Descriptions, Code):
+Context (Abstractions, Descriptions, Code with line numbers):
 {context}
 
 
@@ -692,7 +694,7 @@ Complete Tutorial Structure{structure_note}:
 Context from previous chapters{prev_summary_note}:
 {previous_chapters_summary if previous_chapters_summary else "This is the first chapter."}
 
-Relevant Code Snippets (Code itself remains unchanged):
+ Relevant Code Snippets with line numbers (Code itself remains unchanged):
 {file_context_str if file_context_str else "No specific code snippets provided for this abstraction."}
 
 
