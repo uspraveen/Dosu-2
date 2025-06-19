@@ -3,6 +3,8 @@ import os
 import logging
 import json
 from datetime import datetime
+import time
+from threading import Lock
 
 # Configure logging
 log_directory = os.getenv("LOG_DIR", "logs")
@@ -24,11 +26,54 @@ logger.addHandler(file_handler)
 # Simple cache configuration
 cache_file = "llm_cache.json"
 
+# Token bucket for Gemini token-per-minute rate limiting
+TPM_LIMIT = int(os.getenv("GEMINI_TPM_LIMIT", "200000"))
+_tokens = TPM_LIMIT
+_last_check = time.monotonic()
+_bucket_lock = Lock()
+
+
+def _refill_tokens():
+    """Refill tokens in the bucket based on elapsed time."""
+    global _tokens, _last_check
+    now = time.monotonic()
+    elapsed = now - _last_check
+    if elapsed <= 0:
+        return
+    rate_per_sec = TPM_LIMIT / 60
+    _tokens = min(TPM_LIMIT, _tokens + elapsed * rate_per_sec)
+    _last_check = now
+
+
+def _acquire_tokens(tokens_needed: float) -> None:
+    """Block until the requested number of tokens is available."""
+    global _tokens
+    rate_per_sec = TPM_LIMIT / 60
+    while True:
+        with _bucket_lock:
+            _refill_tokens()
+            if tokens_needed <= _tokens:
+                _tokens -= tokens_needed
+                return
+            missing = tokens_needed - _tokens
+        time.sleep(missing / rate_per_sec)
+
+
+def _estimate_tokens(text: str) -> int:
+    """Very rough token estimate using 4 characters per token."""
+    if not text:
+        return 0
+    return max(1, len(text) // 4)
+
 
 # By default, we Google Gemini 2.5 pro, as it shows great performance for code understanding
 def call_llm(prompt: str, use_cache: bool = True) -> str:
+    """Call Gemini with optional caching and token-per-minute limiting."""
     # Log the prompt
     logger.info(f"PROMPT: {prompt}")
+
+    # Throttle based on token usage of the prompt
+    _acquire_tokens(_estimate_tokens(prompt))
 
     # Check cache if enabled
     if use_cache:
@@ -61,6 +106,8 @@ def call_llm(prompt: str, use_cache: bool = True) -> str:
     
     response = client.models.generate_content(model=model, contents=[prompt])
     response_text = response.text
+    # Account for tokens used by the response
+    _acquire_tokens(_estimate_tokens(response_text))
 
     # Log the response
     logger.info(f"RESPONSE: {response_text}")

@@ -14,7 +14,8 @@ pip install -r requirements.txt
 ```
 
 3. Provide credentials for your preferred LLM provider. The default implementation expects the `GEMINI_API_KEY` environment variable, but `codebase-understanding/utils/call_llm.py` can be adapted for other providers.
-4. When crawling GitHub repositories, supply a personal access token using `--token` or the `GITHUB_TOKEN` environment variable to avoid rate limits.
+4. Optionally set `GEMINI_TPM_LIMIT` to control the allowed Gemini tokens per minute (default: `200000`).
+5. When crawling GitHub repositories, supply a personal access token using `--token` or the `GITHUB_TOKEN` environment variable to avoid rate limits.
 
 ## Running the codebase-understanding flow
 
