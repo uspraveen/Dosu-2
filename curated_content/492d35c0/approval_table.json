@@ -1,0 +1,632 @@
+[
+  {
+    "ID": 1,
+    "Title": "LangChain Official Documentation",
+    "URL": "https://github.com/LangChainAI/langchain",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 2,
+    "Title": "LangChain Documentation",
+    "URL": "https://www.langchain.com/documentation",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 3,
+    "Title": "LangChain Resources",
+    "URL": "https://www.langchain.com/resources",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 4,
+    "Title": "Graph Database Tutorial",
+    "URL": "https://www.langchain.com/tutorials/graph-database",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 5,
+    "Title": "Simple LLM Application Tutorial",
+    "URL": "https://www.langchain.com/tutorials/simple-llm-application",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 6,
+    "Title": "Chatbot Tutorial",
+    "URL": "https://www.langchain.com/tutorials/chatbot",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 7,
+    "Title": "RAG Part 2 Tutorial",
+    "URL": "https://www.langchain.com/tutorials/rag-part-2",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 8,
+    "Title": "Extraction Chain Tutorial",
+    "URL": "https://www.langchain.com/tutorials/extraction-chain",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 9,
+    "Title": "Build An Agent Tutorial",
+    "URL": "https://www.langchain.com/tutorials/build-an-agent",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 10,
+    "Title": "RAG Part 1 Tutorial",
+    "URL": "https://www.langchain.com/tutorials/rag-part-1",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 11,
+    "Title": "Semantic Search Engine Tutorial",
+    "URL": "https://www.langchain.com/tutorials/semantic-search-engine",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 12,
+    "Title": "SQL Question Answering Tutorial",
+    "URL": "https://www.langchain.com/tutorials/sql-question-answering",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 13,
+    "Title": "Summarize Text Tutorial",
+    "URL": "https://www.langchain.com/tutorials/summarize-text",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 14,
+    "Title": "Tools In Chain Guide",
+    "URL": "https://www.langchain.com/guides/tools-in-chain",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 15,
+    "Title": "Vectorstore Retriever Guide",
+    "URL": "https://www.langchain.com/guides/vectorstore-retriever",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 16,
+    "Title": "Add Memory To Chatbots Guide",
+    "URL": "https://www.langchain.com/guides/add-memory-to-chatbots",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 17,
+    "Title": "Example Selectors Guide",
+    "URL": "https://www.langchain.com/guides/example-selectors",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 18,
+    "Title": "Semantic Layer Graph DB Guide",
+    "URL": "https://www.langchain.com/guides/semantic-layer-graph-db",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 19,
+    "Title": "Parallel Runnables Guide",
+    "URL": "https://www.langchain.com/guides/parallel-runnables",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 20,
+    "Title": "Stream Chat Responses Guide",
+    "URL": "https://www.langchain.com/guides/stream-chat-responses",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 21,
+    "Title": "Add Retrieval To Chatbots Guide",
+    "URL": "https://www.langchain.com/guides/add-retrieval-to-chatbots",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 22,
+    "Title": "Few Shot Examples Guide",
+    "URL": "https://www.langchain.com/guides/few-shot-examples",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 23,
+    "Title": "Custom Functions Guide",
+    "URL": "https://www.langchain.com/guides/custom-functions",
+    "Source": "How-to guides | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 24,
+    "Title": "LangChain Tutorials Index",
+    "URL": "https://github.com/langchain-ai/langchain/blob/master/docs/docs/tutorials/index.mdx",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 25,
+    "Title": "Evaluation Tutorial",
+    "URL": "https://docs.smith.langchain.com/tutorials/Developers/evaluation",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 26,
+    "Title": "LangChain OpenTutorial Repository",
+    "URL": "https://github.com/LangChain-OpenTutorial/LangChain-OpenTutorial",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 27,
+    "Title": "Graph Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/graph/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 28,
+    "Title": "LLM Chain Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/llm_chain/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 29,
+    "Title": "Chatbot Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/chatbot/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 30,
+    "Title": "QA Chat History Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/qa_chat_history/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 31,
+    "Title": "Extraction Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/extraction/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 32,
+    "Title": "Agents Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/agents/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 33,
+    "Title": "Classification Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/classification/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 34,
+    "Title": "RAG Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/rag/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 35,
+    "Title": "Retrievers Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/retrievers/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 36,
+    "Title": "SQL QA Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/sql_qa/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 37,
+    "Title": "Summarization Tutorial",
+    "URL": "https://python.langchain.com/docs/tutorials/summarization/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 38,
+    "Title": "LangChain How To Guides",
+    "URL": "https://python.langchain.com/docs/how_to/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 39,
+    "Title": "Tools Chain How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/tools_chain/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 40,
+    "Title": "Vectorstore Retriever How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/vectorstore_retriever/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 41,
+    "Title": "Chatbots Memory How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/chatbots_memory/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 42,
+    "Title": "Example Selectors How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/example_selectors/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 43,
+    "Title": "Graph Semantic How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/graph_semantic/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 44,
+    "Title": "Parallel How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/parallel/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 45,
+    "Title": "Chat Streaming How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/chat_streaming/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 46,
+    "Title": "Binding How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/binding/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 47,
+    "Title": "Chatbots Retrieval How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/chatbots_retrieval/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 48,
+    "Title": "Few Shot Examples Chat How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/few_shot_examples_chat/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 49,
+    "Title": "Function Calling How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/function_calling/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 50,
+    "Title": "Installation How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/installation/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 51,
+    "Title": "Query Few Shot How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/query_few_shot/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 52,
+    "Title": "Few Shot Examples How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/few_shot_examples/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 53,
+    "Title": "Functions How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/functions/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 54,
+    "Title": "Output Parser Structured How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/output_parser_structured/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 55,
+    "Title": "Query No Queries How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/query_no_queries/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 56,
+    "Title": "Routing How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/routing/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 57,
+    "Title": "Structured Output How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/structured_output/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 58,
+    "Title": "Summarize Map Reduce How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/summarize_map_reduce/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 59,
+    "Title": "Summarize Refine How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/summarize_refine/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 60,
+    "Title": "Summarize Stuff How To Guide",
+    "URL": "https://python.langchain.com/docs/how_to/summarize_stuff/",
+    "Source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+    "Type": "documentation",
+    "Priority": 1,
+    "Relevance": "High",
+    "Method": "unknown"
+  },
+  {
+    "ID": 61,
+    "Title": "LangGraph Overview",
+    "URL": "https://www.langchain.com/langgraph",
+    "Source": "LangGraph",
+    "Type": "resource",
+    "Priority": 2,
+    "Relevance": "Medium",
+    "Method": "unknown"
+  },
+  {
+    "ID": 62,
+    "Title": "Mastering LangGraph: A Production-Ready Coding Walkthrough",
+    "URL": "https://ragaboutit.com/mastering-langgraph-a-production-ready-coding-walkthrough-for-software-engineers/",
+    "Source": "News from generation RAG",
+    "Type": "resource",
+    "Priority": 2,
+    "Relevance": "Medium",
+    "Method": "unknown"
+  },
+  {
+    "ID": 63,
+    "Title": "Building Robust Agentic Applications with LangGraph, LangCha...",
+    "URL": "https://jillanisofttech.medium.com/building-robust-agentic-applications-with-langgraph-langchain-and-langsmith-an-end-to-end-guide-d83da85e8583",
+    "Source": "Jillani Soft Tech | Medium",
+    "Type": "tutorial",
+    "Priority": 2,
+    "Relevance": "Medium",
+    "Method": "unknown"
+  }
+]

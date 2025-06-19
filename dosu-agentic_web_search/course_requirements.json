@@ -1,0 +1,34 @@
+{
+  "course_requirements": {
+    "org_id": "Dosu_001",
+    "user_id": "Praveen_001",
+    "trainee_id": "new_one",
+    "trainee_name": "Praveen",
+    "course_id": "Langgraph_Mastery_001",
+    "training_prompt": "LangGraph end-to-end: setup, integration, security, best practices, and real-world implementation patterns",
+    "job_description": "Building scalable agentic AI applications using LangChain.",
+    "timeframe_hours": 0.1,
+    "include_web_search": true,
+    "web_links": [
+      "",
+      ""
+    ],
+    "content_sources": {
+      "docs": true,
+      "github_codebase": true,
+      "slack": false,
+      "confluence": true,
+      "jira": false
+    },
+    "github": {
+      "pat": ["ghp_example_token_here"],
+      "repos": [
+        "company/backend-services",
+        "company/aws-infrastructure"
+      ]
+    }
+  },
+  "web_search_instructions": {
+    "target_content": "comprehensive LangGraph documentation, practical tutorials, integration examples, security best practices, and real-world implementation patterns for developer support"
+  }
+}
