@@ -1,0 +1,24 @@
+{
+  "total_urls": 1,
+  "successful": 1,
+  "failed": 0,
+  "total_words": 2848,
+  "avg_words_per_page": 2848,
+  "crawl_timestamp": "2025-06-20T13:27:40.547150",
+  "extraction_summary": {
+    "total_attempts": 1,
+    "successful_extractions": 1,
+    "timeout_extractions": 0,
+    "error_extractions": 0
+  },
+  "results": [
+    {
+      "url": "https://python.langchain.com/docs/tutorials/graph/",
+      "title": "LangChain Graph Tutorial",
+      "success": true,
+      "word_count": 2848,
+      "file_path": "curated_content\\81530888\\content/LangChain Graph Tutorial_3860.md",
+      "extraction_method": "unknown"
+    }
+  ]
+}

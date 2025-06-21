@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# knowledge_graph_generator.py
 """
 Neo4j AuraDB Code Intelligence Importer
 
@@ -13,7 +14,7 @@ Features:
 - Comprehensive relationship mapping
 - Query examples and utilities
 
-Author: Praveen
+Author: AI Assistant
 License: MIT
 """
 
@@ -27,9 +28,6 @@ from typing import Dict, List, Optional, Any, Tuple
 import hashlib
 import asyncio
 from dataclasses import dataclass
-import dotenv
-
-dotenv.load_dotenv()
 
 # Core imports
 from neo4j import GraphDatabase, Driver
@@ -275,7 +273,8 @@ class Neo4jCodeImporter:
                 "CREATE INDEX class_name_idx IF NOT EXISTS FOR (c:Class) ON (c.name)",
                 "CREATE INDEX file_name_idx IF NOT EXISTS FOR (f:File) ON (f.name)",
                 "CREATE INDEX node_type_idx IF NOT EXISTS FOR (n) ON (n.node_type)",
-                "CREATE INDEX complexity_idx IF NOT EXISTS FOR (f:Function) ON (f.complexity)"
+                "CREATE INDEX complexity_idx IF NOT EXISTS FOR (f:Function) ON (f.complexity)",
+                "CREATE INDEX qualified_name_idx IF NOT EXISTS FOR (f:Function) ON (f.qualified_name)"
             ]
             
             for index in indexes:
@@ -317,7 +316,7 @@ class Neo4jCodeImporter:
                 except Exception as e:
                     logger.warning(f"Vector index creation failed: {e}")
         
-        logger.info("Schema creation completed")
+        logger.info("Basic schema creation completed")
     
     def import_analysis_file(self, json_file_path: str):
         """Import AST analysis JSON file into Neo4j"""
@@ -339,6 +338,7 @@ class Neo4jCodeImporter:
         self._import_files(nodes)
         self._import_nodes_batch(nodes)
         self._create_relationships(nodes)
+        self._create_enhanced_relationships()  # NEW: Enhanced go-to-definition support
         
         self.stats.end_time = time.time()
         self._print_import_summary()
@@ -761,6 +761,177 @@ class Neo4jCodeImporter:
                 session.run(query, {'relations': batch})
                 self.stats.relationships_created += len(batch)
     
+    def _create_enhanced_relationships(self):
+        """Create enhanced relationships for go-to-definition functionality"""
+        logger.info("Creating enhanced relationships for go-to-definition...")
+        
+        # 1. Create import resolution relationships
+        self._create_import_resolution()
+        
+        # 2. Create namespace-aware function calls  
+        self._create_namespace_aware_calls()
+        
+        logger.info("Enhanced relationships creation completed")
+    
+    def _create_import_resolution(self):
+        """Link imports to their actual definitions"""
+        logger.info("Creating import resolution relationships...")
+        
+        with self.driver.session() as session:
+            # Resolve 'from module import item' statements
+            query = """
+            MATCH (imp:Import)
+            WHERE imp.import_type = 'from_import' AND imp.module IS NOT NULL
+            
+            // Extract imported items from the imports array
+            UNWIND imp.imports as imported_item
+            
+            // Method 1: Find exact file path match (local modules)
+            OPTIONAL MATCH (def_func:Function)
+            WHERE def_func.file_path CONTAINS replace(imp.module, '.', '/')
+              AND def_func.name = imported_item
+            
+            OPTIONAL MATCH (def_class:Class)
+            WHERE def_class.file_path CONTAINS replace(imp.module, '.', '/')
+              AND def_class.name = imported_item
+            
+            // Method 2: Find by module name pattern (for packages)
+            OPTIONAL MATCH (def_func2:Function)
+            WHERE def_func2.file_path ENDS WITH (imp.module + '.py')
+              AND def_func2.name = imported_item
+            
+            OPTIONAL MATCH (def_class2:Class)
+            WHERE def_class2.file_path ENDS WITH (imp.module + '.py')
+              AND def_class2.name = imported_item
+            
+            // Create resolution relationships
+            FOREACH (f IN CASE WHEN def_func IS NOT NULL THEN [def_func] ELSE [] END |
+                MERGE (imp)-[:RESOLVES_TO]->(f)
+            )
+            FOREACH (c IN CASE WHEN def_class IS NOT NULL THEN [def_class] ELSE [] END |
+                MERGE (imp)-[:RESOLVES_TO]->(c)
+            )
+            FOREACH (f2 IN CASE WHEN def_func2 IS NOT NULL THEN [def_func2] ELSE [] END |
+                MERGE (imp)-[:RESOLVES_TO]->(f2)
+            )
+            FOREACH (c2 IN CASE WHEN def_class2 IS NOT NULL THEN [def_class2] ELSE [] END |
+                MERGE (imp)-[:RESOLVES_TO]->(c2)
+            )
+            """
+            
+            result = session.run(query)
+            logger.info("Import resolution relationships created")
+            
+            # Also handle direct imports (import module)
+            direct_import_query = """
+            MATCH (imp:Import)
+            WHERE imp.import_type = 'import'
+            
+            UNWIND imp.imports as module_name
+            
+            // Find files that match the module
+            OPTIONAL MATCH (file:File)
+            WHERE file.path CONTAINS replace(module_name, '.', '/')
+              AND file.path ENDS WITH '.py'
+            
+            // Link import to the file's main classes/functions
+            OPTIONAL MATCH (file)<-[:DEFINED_IN]-(def:Function)
+            WHERE def.name = split(file.name, '.')[0]  // Main function matching filename
+            
+            OPTIONAL MATCH (file)<-[:DEFINED_IN]-(def_class:Class)
+            WHERE def_class.name = split(file.name, '.')[0]  // Main class matching filename
+            
+            FOREACH (d IN CASE WHEN def IS NOT NULL THEN [def] ELSE [] END |
+                MERGE (imp)-[:RESOLVES_TO]->(d)
+            )
+            FOREACH (dc IN CASE WHEN def_class IS NOT NULL THEN [def_class] ELSE [] END |
+                MERGE (imp)-[:RESOLVES_TO]->(dc)
+            )
+            """
+            
+            session.run(direct_import_query)
+            logger.info("Direct import resolution completed")
+    
+    def _create_namespace_aware_calls(self):
+        """Create enhanced function call relationships with proper resolution"""
+        logger.info("Creating namespace-aware function calls...")
+        
+        with self.driver.session() as session:
+            query = """
+            MATCH (caller:Function)
+            WHERE size(caller.calls) > 0
+            
+            UNWIND caller.calls as called_name
+            WITH caller, called_name
+            WHERE called_name IS NOT NULL AND called_name <> ''
+            
+            // Get caller's file for context
+            MATCH (caller)-[:DEFINED_IN]->(caller_file:File)
+            
+            // Priority 1: Exact match in same file
+            OPTIONAL MATCH (caller_file)<-[:DEFINED_IN]-(local_func:Function)
+            WHERE local_func.name = called_name AND local_func <> caller
+            
+            // Priority 2: Imported function resolution
+            OPTIONAL MATCH (caller_file)-[:IMPORTS]->(imp:Import)-[:RESOLVES_TO]->(imported_func:Function)
+            WHERE imported_func.name = called_name
+            
+            // Priority 3: Method call within same class
+            OPTIONAL MATCH (caller)-[:BELONGS_TO]->(caller_class:Class)
+            OPTIONAL MATCH (method:Function)-[:BELONGS_TO]->(caller_class)
+            WHERE method.name = called_name AND method <> caller
+            
+            // Priority 4: Global function with same name (fallback)
+            OPTIONAL MATCH (global_func:Function)
+            WHERE global_func.name = called_name 
+              AND global_func <> caller
+              AND local_func IS NULL 
+              AND imported_func IS NULL 
+              AND method IS NULL
+            
+            // Create relationships with priority metadata
+            FOREACH (target IN CASE WHEN local_func IS NOT NULL THEN [local_func] ELSE [] END |
+                MERGE (caller)-[r:CALLS_LOCAL]->(target)
+                SET r.called_name = called_name,
+                    r.resolution_type = 'local',
+                    r.priority = 1,
+                    r.created_at = timestamp()
+            )
+            
+            FOREACH (target IN CASE WHEN imported_func IS NOT NULL THEN [imported_func] ELSE [] END |
+                MERGE (caller)-[r:CALLS_IMPORTED]->(target)
+                SET r.called_name = called_name,
+                    r.resolution_type = 'imported',
+                    r.priority = 2,
+                    r.created_at = timestamp()
+            )
+            
+            FOREACH (target IN CASE WHEN method IS NOT NULL THEN [method] ELSE [] END |
+                MERGE (caller)-[r:CALLS_METHOD]->(target)
+                SET r.called_name = called_name,
+                    r.resolution_type = 'method',
+                    r.priority = 3,
+                    r.created_at = timestamp()
+            )
+            
+            FOREACH (target IN CASE WHEN global_func IS NOT NULL THEN [global_func] ELSE [] END |
+                MERGE (caller)-[r:CALLS_GLOBAL]->(target)
+                SET r.called_name = called_name,
+                    r.resolution_type = 'global',
+                    r.priority = 4,
+                    r.created_at = timestamp()
+            )
+            
+            RETURN count(*) as enhanced_calls_created
+            """
+            
+            result = session.run(query)
+            record = result.single()
+            if record:
+                calls_created = record['enhanced_calls_created']
+                logger.info(f"Created {calls_created} enhanced function call relationships")
+                self.stats.relationships_created += calls_created
+    
     def create_sample_queries(self):
         """Create example queries for code intelligence"""
         logger.info("Creating sample query functions...")
@@ -777,8 +948,101 @@ class Neo4jCodeImporter:
             
             'find_function_calls': """
             // Find functions that call a specific function
-            MATCH (caller:Function)-[:CALLS]->(callee:Function {name: $function_name})
+            MATCH (caller:Function)-[:CALLS_LOCAL|CALLS_IMPORTED|CALLS_METHOD|CALLS_GLOBAL]->(callee:Function {name: $function_name})
             RETURN caller.name, caller.file_path, caller.github_url
+            """,
+            
+            'go_to_function_definition': """
+            // Go to definition: Find where a called function is defined
+            MATCH (caller_file:File {path: $caller_file_path})
+            
+            // Priority 1: Local function in same file
+            OPTIONAL MATCH (caller_file)<-[:DEFINED_IN]-(local_func:Function {name: $function_name})
+            
+            // Priority 2: Imported function
+            OPTIONAL MATCH (caller_file)-[:IMPORTS]->(imp:Import)-[:RESOLVES_TO]->(imported_func:Function)
+            WHERE imported_func.name = $function_name
+            
+            // Priority 3: Method in class context
+            OPTIONAL MATCH (caller_file)<-[:DEFINED_IN]-(caller:Function {name: $caller_function_name})
+                          -[:BELONGS_TO]->(class:Class)
+                          <-[:BELONGS_TO]-(method:Function {name: $function_name})
+            
+            // Priority 4: Global search
+            OPTIONAL MATCH (global_func:Function {name: $function_name})
+            
+            WITH 
+                local_func, imported_func, method, global_func,
+                CASE 
+                    WHEN local_func IS NOT NULL THEN 1
+                    WHEN imported_func IS NOT NULL THEN 2  
+                    WHEN method IS NOT NULL THEN 3
+                    ELSE 4
+                END as priority
+            
+            WITH 
+                CASE 
+                    WHEN local_func IS NOT NULL THEN local_func
+                    WHEN imported_func IS NOT NULL THEN imported_func
+                    WHEN method IS NOT NULL THEN method 
+                    ELSE global_func
+                END as definition, priority
+            
+            WHERE definition IS NOT NULL
+            
+            RETURN 
+                definition.name as function_name,
+                definition.file_path as file_path,
+                definition.line_start as line_number,
+                definition.github_url as github_link,
+                definition.docstring as documentation,
+                CASE priority
+                    WHEN 1 THEN 'local'
+                    WHEN 2 THEN 'imported'  
+                    WHEN 3 THEN 'method'
+                    ELSE 'global'
+                END as resolution_type
+            ORDER BY priority LIMIT 1
+            """,
+            
+            'find_all_usages': """
+            // Find all usages: Where is this function/class used?
+            MATCH (definition)
+            WHERE definition.name = $definition_name
+              AND definition.node_type IN ['function', 'class']
+            
+            // Find enhanced function calls
+            OPTIONAL MATCH (caller:Function)-[:CALLS_LOCAL|CALLS_IMPORTED|CALLS_METHOD|CALLS_GLOBAL]->(definition)
+            WHERE definition.node_type = 'function'
+            
+            // Find class inheritance
+            OPTIONAL MATCH (child:Class)-[:INHERITS]->(definition)  
+            WHERE definition.node_type = 'class'
+            
+            // Find imports
+            OPTIONAL MATCH (imp:Import)-[:RESOLVES_TO]->(definition)
+            
+            RETURN DISTINCT
+                CASE 
+                    WHEN caller IS NOT NULL THEN caller.file_path
+                    WHEN child IS NOT NULL THEN child.file_path
+                    WHEN imp IS NOT NULL THEN imp.file_path
+                END as usage_file,
+                CASE 
+                    WHEN caller IS NOT NULL THEN caller.line_start
+                    WHEN child IS NOT NULL THEN child.line_start  
+                    WHEN imp IS NOT NULL THEN imp.line_start
+                END as usage_line,
+                CASE 
+                    WHEN caller IS NOT NULL THEN 'function_call'
+                    WHEN child IS NOT NULL THEN 'inheritance'
+                    WHEN imp IS NOT NULL THEN 'import'
+                END as usage_type,
+                CASE 
+                    WHEN caller IS NOT NULL THEN caller.github_url
+                    WHEN child IS NOT NULL THEN child.github_url
+                    WHEN imp IS NOT NULL THEN imp.github_url  
+                END as github_link
             """,
             
             'find_class_hierarchy': """
@@ -797,12 +1061,6 @@ class Neo4jCodeImporter:
             YIELD node, score
             WHERE node <> target
             RETURN node.name, node.file_path, node.github_url, score
-            """,
-            
-            'find_file_dependencies': """
-            // Find files that import from a specific module
-            MATCH (file:File)-[:IMPORTS]->(imp:Import)-[:FROM_MODULE]->(mod:Module {name: $module_name})
-            RETURN file.path, imp.content, imp.github_url
             """,
             
             'code_metrics': """
@@ -835,6 +1093,77 @@ class Neo4jCodeImporter:
         
         logger.info(f"Sample queries saved to: {queries_file}")
     
+    def go_to_definition(self, function_name: str, caller_file: str, caller_function: str = None):
+        """Go-to-definition query helper"""
+        with self.driver.session() as session:
+            result = session.run("""
+            MATCH (caller_file:File {path: $caller_file_path})
+            
+            // Priority 1: Local function in same file
+            OPTIONAL MATCH (caller_file)<-[:DEFINED_IN]-(local_func:Function {name: $function_name})
+            
+            // Priority 2: Imported function
+            OPTIONAL MATCH (caller_file)-[:IMPORTS]->(imp:Import)-[:RESOLVES_TO]->(imported_func:Function)
+            WHERE imported_func.name = $function_name
+            
+            // Priority 3: Method in class context
+            OPTIONAL MATCH (caller_file)<-[:DEFINED_IN]-(caller:Function {name: $caller_function_name})
+                          -[:BELONGS_TO]->(class:Class)
+                          <-[:BELONGS_TO]-(method:Function {name: $function_name})
+            
+            // Priority 4: Global search
+            OPTIONAL MATCH (global_func:Function {name: $function_name})
+            
+            WITH 
+                local_func, imported_func, method, global_func,
+                CASE 
+                    WHEN local_func IS NOT NULL THEN 1
+                    WHEN imported_func IS NOT NULL THEN 2  
+                    WHEN method IS NOT NULL THEN 3
+                    ELSE 4
+                END as priority
+            
+            WITH 
+                CASE 
+                    WHEN local_func IS NOT NULL THEN local_func
+                    WHEN imported_func IS NOT NULL THEN imported_func
+                    WHEN method IS NOT NULL THEN method 
+                    ELSE global_func
+                END as definition, priority
+            
+            WHERE definition IS NOT NULL
+            
+            RETURN 
+                definition.name as function_name,
+                definition.file_path as file_path,
+                definition.line_start as line_number,
+                definition.github_url as github_link,
+                definition.docstring as documentation,
+                CASE priority
+                    WHEN 1 THEN 'local'
+                    WHEN 2 THEN 'imported'  
+                    WHEN 3 THEN 'method'
+                    ELSE 'global'
+                END as resolution_type
+            ORDER BY priority LIMIT 1
+            """, {
+                'function_name': function_name,
+                'caller_file_path': caller_file,
+                'caller_function_name': caller_function
+            })
+            
+            record = result.single()
+            if record:
+                return {
+                    'name': record['function_name'],
+                    'file': record['file_path'],
+                    'line': record['line_number'],
+                    'github_url': record['github_link'],
+                    'docs': record['documentation'],
+                    'type': record['resolution_type']
+                }
+            return None
+    
     def run_sample_query(self, query_name: str, **params):
         """Run a sample query with parameters"""
         queries = {
@@ -863,6 +1192,15 @@ class Neo4jCodeImporter:
                 avg_complexity: round(avg_complexity, 2),
                 max_complexity: max_complexity
             } as metrics
+            """,
+            
+            'enhanced_call_stats': """
+            // Check enhanced relationship creation
+            MATCH ()-[r:CALLS_LOCAL|CALLS_IMPORTED|CALLS_METHOD|CALLS_GLOBAL]->()
+            RETURN 
+                type(r) as relationship_type,
+                count(r) as count
+            ORDER BY count DESC
             """
         }
         
@@ -1035,9 +1373,21 @@ Examples:
             
             print("\nImport completed successfully!")
             print("You can now run queries against your code intelligence graph.")
+            print("Enhanced go-to-definition and find-all-references are available!")
             
             if EMBEDDINGS_AVAILABLE:
                 print("Vector similarity search is available for finding similar code.")
+            
+            # Test enhanced relationships
+            try:
+                enhanced_stats = importer.run_sample_query('enhanced_call_stats')
+                if enhanced_stats:
+                    print("\nEnhanced Relationships Created:")
+                    for stat in enhanced_stats:
+                        rel_type = stat['relationship_type'].replace('CALLS_', '').lower()
+                        print(f"  {rel_type} calls: {stat['count']:,}")
+            except Exception as e:
+                logger.debug(f"Could not fetch enhanced stats: {e}")
             
             return 0
             

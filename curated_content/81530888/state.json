@@ -1,0 +1,401 @@
+{
+  "session_id": "81530888",
+  "course_requirements": {
+    "course_requirements": {
+      "org_id": "Dosu_001",
+      "user_id": "Praveen_001",
+      "trainee_id": "new_one",
+      "trainee_name": "Praveen",
+      "course_id": "Langgraph_Mastery_001",
+      "training_prompt": "LangGraph end-to-end: setup, integration, security, best practices, and real-world implementation patterns",
+      "job_description": "Building scalable agentic AI applications using LangChain.",
+      "timeframe_hours": 0.1,
+      "include_web_search": true,
+      "web_links": [
+        "",
+        ""
+      ],
+      "content_sources": {
+        "docs": true,
+        "github_codebase": true,
+        "slack": false,
+        "confluence": true,
+        "jira": false
+      },
+      "github": {
+        "pat": [
+          "ghp_example_token_here"
+        ],
+        "repos": [
+          "company/backend-services",
+          "company/aws-infrastructure"
+        ]
+      }
+    },
+    "web_search_instructions": {
+      "target_content": "comprehensive LangGraph documentation, practical tutorials, integration examples, security best practices, and real-world implementation patterns for developer support"
+    }
+  },
+  "search_sites": [
+    {
+      "title": "LangGraph",
+      "url": "https://www.langchain.com/langgraph",
+      "description": "Build controllable agents with LangGraph, our low-level agent orchestration framework. Deploy and scale with LangGraph Platform, with APIs for state management, a visual studio for debugging, and multiple deployment options."
+    },
+    {
+      "title": "LangGraph Platform",
+      "url": "https://www.langchain.com/langgraph-platform",
+      "description": "Develop, deploy, and scale agents with LangGraph Platform \u2014 our purpose-built platform for long-running, stateful workflows."
+    },
+    {
+      "title": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "url": "https://python.langchain.com/docs/tutorials/",
+      "description": "New to LangChain or LLM app development in general? Read this material to quickly get up and running building your first applications."
+    },
+    {
+      "title": "LangGraph Tutorial: What Is LangGraph and How to Use It? | DataCamp",
+      "url": "https://www.datacamp.com/tutorial/langgraph-tutorial",
+      "description": "LangGraph enables us to create stateful, multi-actor applications utilizing LLMs as easily as possible. It extends the capabilities of LangChain, introducing the ability to create and manage cyclical graphs, which are pivotal for developing sophisticated agent runtimes."
+    },
+    {
+      "title": "Mastering LangGraph: A Production-Ready Coding Walkthrough for Software Engineers \u2013 News from generation RAG",
+      "url": "https://ragaboutit.com/mastering-langgraph-a-production-ready-coding-walkthrough-for-software-engineers/",
+      "description": "Introduction to LangGraph for Production ApplicationsSetting Up the Development EnvironmentDesigning a Production-Grade LangGraph ArchitectureDefining Graph States and WorkflowsImplementing Multi-Agent CollaborationImplementing State Management and PersistenceOptimizing Performance for ..."
+    }
+  ],
+  "extracted_urls": [
+    {
+      "url": "https://python.langchain.com/docs/tutorials/graph/",
+      "title": "LangChain Graph Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/tutorials/llm_chain/",
+      "title": "LangChain LLM Chain Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/tutorials/chatbot/",
+      "title": "LangChain Chatbot Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/tutorials/qa_chat_history/",
+      "title": "LangChain QA Chat History Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/tutorials/extraction/",
+      "title": "LangChain Extraction Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/tutorials/agents/",
+      "title": "LangChain Agents Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/tutorials/classification/",
+      "title": "LangChain Classification Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/tutorials/rag/",
+      "title": "LangChain RAG Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/tutorials/retrievers/",
+      "title": "LangChain Retrievers Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/tutorials/sql_qa/",
+      "title": "LangChain SQL QA Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/tutorials/summarization/",
+      "title": "LangChain Summarization Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/how_to/tools_chain/",
+      "title": "LangChain Tools Chain Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/how_to/vectorstore_retriever/",
+      "title": "LangChain Vectorstore Retriever Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/how_to/chatbots_memory/",
+      "title": "LangChain Chatbots Memory Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/how_to/example_selectors/",
+      "title": "LangChain Example Selectors Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/how_to/graph_semantic/",
+      "title": "LangChain Graph Semantic Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/how_to/parallel/",
+      "title": "LangChain Parallel Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/how_to/chat_streaming/",
+      "title": "LangChain Chat Streaming Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/how_to/binding/",
+      "title": "LangChain Binding Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/how_to/chatbots_retrieval/",
+      "title": "LangChain Chatbots Retrieval Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/how_to/few_shot_examples_chat/",
+      "title": "LangChain Few Shot Examples Chat Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/concepts/agents/",
+      "title": "LangChain Agents Concept",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/concepts/architecture/",
+      "title": "LangChain Architecture Concept",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/concepts/async/",
+      "title": "LangChain Async Concept",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/concepts/callbacks/",
+      "title": "LangChain Callbacks Concept",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/concepts/chat_history/",
+      "title": "LangChain Chat History Concept",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/concepts/chat_models/",
+      "title": "LangChain Chat Models Concept",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/concepts/document_loaders/",
+      "title": "LangChain Document Loaders Concept",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/concepts/embedding_models/",
+      "title": "LangChain Embedding Models Concept",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/concepts/evaluation/",
+      "title": "LangChain Evaluation Concept",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://python.langchain.com/docs/concepts/example_selectors/",
+      "title": "LangChain Example Selectors Concept",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    },
+    {
+      "url": "https://www.langchain.com/langgraph",
+      "title": "LangGraph Overview",
+      "source": "LangGraph",
+      "type": "resource",
+      "priority": 2,
+      "relevance": "Medium"
+    },
+    {
+      "url": "https://www.langchain.com/langgraph-platform",
+      "title": "LangGraph Platform Overview",
+      "source": "LangGraph Platform",
+      "type": "resource",
+      "priority": 2,
+      "relevance": "Medium"
+    },
+    {
+      "url": "https://www.datacamp.com/tutorial/langgraph-tutorial",
+      "title": "LangGraph Tutorial: What Is LangGraph and How to Use It?",
+      "source": "DataCamp",
+      "type": "tutorial",
+      "priority": 2,
+      "relevance": "Medium"
+    },
+    {
+      "url": "https://ragaboutit.com/mastering-langgraph-a-production-ready-coding-walkthrough-for-software-engineers/",
+      "title": "Mastering LangGraph: A Production-Ready Coding Walkthrough for Software Engineers",
+      "source": "News from generation RAG",
+      "type": "resource",
+      "priority": 2,
+      "relevance": "Medium"
+    }
+  ],
+  "approved_urls": [
+    {
+      "url": "https://python.langchain.com/docs/tutorials/graph/",
+      "title": "LangChain Graph Tutorial",
+      "source": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "type": "documentation",
+      "priority": 1,
+      "relevance": "High"
+    }
+  ],
+  "crawl_results": {
+    "total_urls": 1,
+    "successful": 1,
+    "failed": 0,
+    "total_words": 2848,
+    "avg_words_per_page": 2848,
+    "crawl_timestamp": "2025-06-20T13:27:40.547150",
+    "extraction_summary": {
+      "total_attempts": 1,
+      "successful_extractions": 1,
+      "timeout_extractions": 0,
+      "error_extractions": 0
+    },
+    "results": [
+      {
+        "url": "https://python.langchain.com/docs/tutorials/graph/",
+        "title": "LangChain Graph Tutorial",
+        "success": true,
+        "word_count": 2848,
+        "file_path": "curated_content\\81530888\\content/LangChain Graph Tutorial_3860.md",
+        "extraction_method": "unknown"
+      }
+    ]
+  },
+  "extraction_attempts": [
+    {
+      "site_title": "Tutorials | \ud83e\udd16\ud83d\udd17 LangChain",
+      "site_url": "https://python.langchain.com/docs/tutorials/",
+      "start_time": "2025-06-20T13:24:26.672813",
+      "end_time": "2025-06-20T13:25:43.670250",
+      "duration_seconds": 76.9974365234375,
+      "status": "completed",
+      "urls_extracted": 31,
+      "error_message": null,
+      "process_terminated": false
+    }
+  ],
+  "status": "completed",
+  "created_at": "2025-06-20T13:24:08.039890",
+  "last_updated": "2025-06-20T13:27:40.549609",
+  "error_log": [
+    "Extraction summary: 1 attempts, 0 timeouts"
+  ]
+}
