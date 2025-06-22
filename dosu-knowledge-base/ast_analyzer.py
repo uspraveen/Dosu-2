@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#ast_analyzer.py
 """
 Repository AST Analyzer
 
@@ -10,7 +9,7 @@ Features:
 - Tree-sitter based parsing with regex fallbacks
 - GitHub repository cloning and analysis
 - Function, class, and import extraction
-- Relationship mapping between code entities
+- Enhanced GitHub URL generation with branch detection
 - Neo4j-ready JSON output format
 - Performance optimization with caching
 
@@ -70,6 +69,12 @@ class SimpleASTExtractor:
     """Simple AST extraction using Tree-sitter with robust fallbacks"""
     
     def __init__(self):
+        """
+        Initialize the AST extractor with Tree-sitter or fallback to regex.
+        
+        Sets up the Tree-sitter parser if available, otherwise prepares
+        for regex-based extraction as a fallback method.
+        """
         self.parser = None
         self.language = None
         
@@ -88,14 +93,33 @@ class SimpleASTExtractor:
             logger.warning("Using regex fallback - install tree-sitter-python for better results")
 
     def _validate_python_file(self, file_path: str) -> bool:
-        """Validate that the file is a Python file"""
+        """
+        Validate that the file is a Python file.
+        
+        Args:
+            file_path (str): Path to the file to validate
+            
+        Returns:
+            bool: True if file is a Python file, False otherwise
+        """
         if not file_path.endswith('.py'):
             logger.debug(f"Skipping non-Python file: {file_path}")
             return False
         return True
 
-    def extract_from_file(self, file_path: str, content: str, repo_url: str) -> List[Dict]:
-        """Extract AST nodes from a Python file with enhanced metadata for Neo4j"""
+    def extract_from_file(self, file_path: str, content: str, repo_url: str, repo_branch: str = "main") -> List[Dict]:
+        """
+        Extract AST nodes from a Python file with enhanced metadata for Neo4j.
+        
+        Args:
+            file_path (str): Path to the file relative to repository root
+            content (str): File content as string
+            repo_url (str): Repository URL for GitHub link generation
+            repo_branch (str): Repository branch name (default: "main")
+            
+        Returns:
+            List[Dict]: List of extracted AST nodes with comprehensive metadata
+        """
         # Early validation for Python files only
         if not self._validate_python_file(file_path):
             return []
@@ -105,9 +129,9 @@ class SimpleASTExtractor:
             normalized_path = file_path.replace('\\', '/')
             
             if self.parser:
-                nodes = self._extract_with_tree_sitter(normalized_path, content, repo_url)
+                nodes = self._extract_with_tree_sitter(normalized_path, content, repo_url, repo_branch)
             else:
-                nodes = self._extract_with_regex(normalized_path, content, repo_url)
+                nodes = self._extract_with_regex(normalized_path, content, repo_url, repo_branch)
             
             # Debug logging for first few files
             if len(nodes) > 0:
@@ -118,8 +142,19 @@ class SimpleASTExtractor:
             logger.error(f"Error extracting from {file_path}: {e}")
             return []
 
-    def _extract_with_tree_sitter(self, file_path: str, content: str, repo_url: str) -> List[Dict]:
-        """Extract using Tree-sitter with simplified node walking"""
+    def _extract_with_tree_sitter(self, file_path: str, content: str, repo_url: str, repo_branch: str) -> List[Dict]:
+        """
+        Extract using Tree-sitter with simplified node walking.
+        
+        Args:
+            file_path (str): Normalized file path
+            content (str): File content
+            repo_url (str): Repository URL
+            repo_branch (str): Repository branch name
+            
+        Returns:
+            List[Dict]: Extracted nodes with full metadata
+        """
         try:
             tree = self.parser.parse(content.encode('utf-8'))
             root_node = tree.root_node
@@ -129,17 +164,17 @@ class SimpleASTExtractor:
             # Walk the tree and extract nodes
             def walk_tree(node):
                 if node.type == 'function_definition':
-                    func_node = self._extract_function_node(node, file_path, content, repo_url)
+                    func_node = self._extract_function_node(node, file_path, content, repo_url, repo_branch)
                     if func_node:
                         nodes.append(func_node)
                 
                 elif node.type == 'class_definition':
-                    class_node = self._extract_class_node(node, file_path, content, repo_url)
+                    class_node = self._extract_class_node(node, file_path, content, repo_url, repo_branch)
                     if class_node:
                         nodes.append(class_node)
                 
                 elif node.type in ['import_statement', 'import_from_statement']:
-                    import_node = self._extract_import_node(node, file_path, content, repo_url)
+                    import_node = self._extract_import_node(node, file_path, content, repo_url, repo_branch)
                     if import_node:
                         nodes.append(import_node)
                 
@@ -152,14 +187,28 @@ class SimpleASTExtractor:
             
         except Exception as e:
             logger.error(f"Tree-sitter extraction failed for {file_path}: {e}")
-            return self._extract_with_regex(file_path, content, repo_url)
+            return self._extract_with_regex(file_path, content, repo_url, repo_branch)
 
-    def _extract_function_node(self, node, file_path: str, content: str, repo_url: str) -> Optional[Dict]:
-        """Extract detailed function metadata - simplified version"""
+    def _extract_function_node(self, node, file_path: str, content: str, repo_url: str, repo_branch: str) -> Optional[Dict]:
+        """
+        Extract detailed function metadata with enhanced GitHub URL generation.
+        
+        Args:
+            node: Tree-sitter node representing the function
+            file_path (str): File path containing the function
+            content (str): Full file content
+            repo_url (str): Repository URL
+            repo_branch (str): Repository branch name
+            
+        Returns:
+            Optional[Dict]: Function metadata with enhanced GitHub URL
+        """
         try:
             lines = content.split('\n')
             start_line = node.start_point[0] + 1  # 1-indexed
             end_line = node.end_point[0] + 1
+            start_column = node.start_point[1] + 1  # 1-indexed
+            end_column = node.end_point[1] + 1
             
             # Get function name - simple approach
             func_name = None
@@ -184,7 +233,6 @@ class SimpleASTExtractor:
             try:
                 func_text = node.text.decode('utf-8', errors='ignore')
                 # Simple regex to find function calls
-                import re
                 call_pattern = r'(\w+)\s*\('
                 calls = re.findall(call_pattern, func_text)
                 function_calls = list(set([call for call in calls if call != func_name]))[:10]  # Limit to 10
@@ -218,22 +266,26 @@ class SimpleASTExtractor:
             except:
                 docstring = None
             
-            # Generate GitHub URL
-            github_url = self._generate_github_url(repo_url, file_path, start_line, end_line)
+            # Generate GitHub URL with enhanced format
+            github_url = self._generate_github_url(repo_url, file_path, start_line, end_line, start_column, end_column, repo_branch)
             
             # Generate unique ID for Neo4j
             node_id = self._generate_node_id(file_path, func_name, start_line)
+            
+            # Create qualified name for better searchability
+            qualified_name = self._generate_qualified_name(file_path, func_name)
             
             return {
                 "id": node_id,
                 "node_type": "function",
                 "name": func_name,
+                "qualified_name": qualified_name,
                 "location": {
                     "file_path": file_path,
                     "line_start": start_line,
                     "line_end": end_line,
-                    "column_start": node.start_point[1],
-                    "column_end": node.end_point[1]
+                    "column_start": start_column,
+                    "column_end": end_column
                 },
                 "language": "python",
                 "content": node.text.decode('utf-8', errors='ignore')[:500],  # Limit content size
@@ -252,11 +304,25 @@ class SimpleASTExtractor:
             logger.debug(f"Error extracting function node: {e}")
             return None
 
-    def _extract_class_node(self, node, file_path: str, content: str, repo_url: str) -> Optional[Dict]:
-        """Extract detailed class metadata - simplified version"""
+    def _extract_class_node(self, node, file_path: str, content: str, repo_url: str, repo_branch: str) -> Optional[Dict]:
+        """
+        Extract detailed class metadata with enhanced GitHub URL generation.
+        
+        Args:
+            node: Tree-sitter node representing the class
+            file_path (str): File path containing the class
+            content (str): Full file content
+            repo_url (str): Repository URL
+            repo_branch (str): Repository branch name
+            
+        Returns:
+            Optional[Dict]: Class metadata with enhanced GitHub URL
+        """
         try:
             start_line = node.start_point[0] + 1
             end_line = node.end_point[0] + 1
+            start_column = node.start_point[1] + 1
+            end_column = node.end_point[1] + 1
             
             # Extract class name - simple approach
             class_name = None
@@ -311,22 +377,26 @@ class SimpleASTExtractor:
             except:
                 docstring = None
             
-            # Generate GitHub URL
-            github_url = self._generate_github_url(repo_url, file_path, start_line, end_line)
+            # Generate GitHub URL with enhanced format
+            github_url = self._generate_github_url(repo_url, file_path, start_line, end_line, start_column, end_column, repo_branch)
             
             # Generate unique ID
             node_id = self._generate_node_id(file_path, class_name, start_line)
+            
+            # Create qualified name
+            qualified_name = self._generate_qualified_name(file_path, class_name)
             
             return {
                 "id": node_id,
                 "node_type": "class",
                 "name": class_name,
+                "qualified_name": qualified_name,
                 "location": {
                     "file_path": file_path,
                     "line_start": start_line,
                     "line_end": end_line,
-                    "column_start": node.start_point[1],
-                    "column_end": node.end_point[1]
+                    "column_start": start_column,
+                    "column_end": end_column
                 },
                 "language": "python",
                 "content": node.text.decode('utf-8', errors='ignore')[:500],
@@ -342,19 +412,33 @@ class SimpleASTExtractor:
             logger.debug(f"Error extracting class node: {e}")
             return None
 
-    def _extract_import_node(self, node, file_path: str, content: str, repo_url: str) -> Optional[Dict]:
-        """Extract import statement metadata - simplified version"""
+    def _extract_import_node(self, node, file_path: str, content: str, repo_url: str, repo_branch: str) -> Optional[Dict]:
+        """
+        Extract import statement metadata with enhanced GitHub URL generation.
+        
+        Args:
+            node: Tree-sitter node representing the import
+            file_path (str): File path containing the import
+            content (str): Full file content
+            repo_url (str): Repository URL
+            repo_branch (str): Repository branch name
+            
+        Returns:
+            Optional[Dict]: Import metadata with enhanced GitHub URL
+        """
         try:
             start_line = node.start_point[0] + 1
             end_line = node.end_point[0] + 1
+            start_column = node.start_point[1] + 1
+            end_column = node.end_point[1] + 1
             
             import_text = node.text.decode('utf-8')
             
             # Parse import statement
             import_info = self._parse_import_statement(import_text)
             
-            # Generate GitHub URL
-            github_url = self._generate_github_url(repo_url, file_path, start_line, end_line)
+            # Generate GitHub URL with enhanced format
+            github_url = self._generate_github_url(repo_url, file_path, start_line, end_line, start_column, end_column, repo_branch)
             
             # Generate unique ID
             node_id = self._generate_node_id(file_path, f"import_{start_line}", start_line)
@@ -367,8 +451,8 @@ class SimpleASTExtractor:
                     "file_path": file_path,
                     "line_start": start_line,
                     "line_end": end_line,
-                    "column_start": node.start_point[1],
-                    "column_end": node.end_point[1]
+                    "column_start": start_column,
+                    "column_end": end_column
                 },
                 "language": "python",
                 "content": import_text,
@@ -384,8 +468,19 @@ class SimpleASTExtractor:
             logger.debug(f"Error extracting import node: {e}")
             return None
 
-    def _extract_with_regex(self, file_path: str, content: str, repo_url: str) -> List[Dict]:
-        """Fallback regex-based extraction"""
+    def _extract_with_regex(self, file_path: str, content: str, repo_url: str, repo_branch: str) -> List[Dict]:
+        """
+        Fallback regex-based extraction with enhanced GitHub URL generation.
+        
+        Args:
+            file_path (str): Path to the file
+            content (str): File content
+            repo_url (str): Repository URL
+            repo_branch (str): Repository branch name
+            
+        Returns:
+            List[Dict]: Extracted nodes using regex patterns
+        """
         logger.debug(f"Using regex fallback for {file_path}")
         nodes = []
         lines = content.split('\n')
@@ -405,18 +500,20 @@ class SimpleASTExtractor:
                     parameters = [p.strip().split(':')[0].strip() for p in params_str.split(',')]
                     parameters = [p.split('=')[0].strip() for p in parameters if p.strip()]
                 
-                github_url = self._generate_github_url(repo_url, file_path, i, i)
+                github_url = self._generate_github_url(repo_url, file_path, i, i, 1, len(line), repo_branch)
                 node_id = self._generate_node_id(file_path, func_name, i)
+                qualified_name = self._generate_qualified_name(file_path, func_name)
                 
                 nodes.append({
                     "id": node_id,
                     "node_type": "function",
                     "name": func_name,
+                    "qualified_name": qualified_name,
                     "location": {
                         "file_path": file_path,
                         "line_start": i,
                         "line_end": i,
-                        "column_start": 0,
+                        "column_start": 1,
                         "column_end": len(line)
                     },
                     "language": "python",
@@ -441,18 +538,20 @@ class SimpleASTExtractor:
                 bases_str = match.group(2) or ""
                 base_classes = [b.strip() for b in bases_str.split(',') if b.strip()]
                 
-                github_url = self._generate_github_url(repo_url, file_path, i, i)
+                github_url = self._generate_github_url(repo_url, file_path, i, i, 1, len(line), repo_branch)
                 node_id = self._generate_node_id(file_path, class_name, i)
+                qualified_name = self._generate_qualified_name(file_path, class_name)
                 
                 nodes.append({
                     "id": node_id,
                     "node_type": "class",
                     "name": class_name,
+                    "qualified_name": qualified_name,
                     "location": {
                         "file_path": file_path,
                         "line_start": i,
                         "line_end": i,
-                        "column_start": 0,
+                        "column_start": 1,
                         "column_end": len(line)
                     },
                     "language": "python",
@@ -468,7 +567,15 @@ class SimpleASTExtractor:
         return nodes
 
     def _calculate_complexity(self, node) -> int:
-        """Calculate simplified cyclomatic complexity"""
+        """
+        Calculate simplified cyclomatic complexity for a function.
+        
+        Args:
+            node: Tree-sitter node representing the function
+            
+        Returns:
+            int: Complexity score (minimum 1)
+        """
         try:
             text = node.text.decode('utf-8', errors='ignore')
             complexity = 1  # Base complexity
@@ -483,7 +590,15 @@ class SimpleASTExtractor:
             return 1
 
     def _parse_import_statement(self, import_text: str) -> Dict:
-        """Parse import statement to extract module and imports"""
+        """
+        Parse import statement to extract module and imports with enhanced information.
+        
+        Args:
+            import_text (str): The import statement text
+            
+        Returns:
+            Dict: Parsed import information including module, imports, and type
+        """
         import_text = import_text.strip()
         
         if import_text.startswith('from '):
@@ -514,8 +629,22 @@ class SimpleASTExtractor:
             "imports": []
         }
 
-    def _generate_github_url(self, repo_url: str, file_path: str, start_line: int, end_line: int) -> str:
-        """Generate GitHub URL for code location"""
+    def _generate_github_url(self, repo_url: str, file_path: str, start_line: int, end_line: int, start_column: int, end_column: int, repo_branch: str = "main") -> str:
+        """
+        Generate accurate GitHub URL for code location with proper branch and column information.
+        
+        Args:
+            repo_url (str): Repository URL
+            file_path (str): Path to the file
+            start_line (int): Starting line number
+            end_line (int): Ending line number  
+            start_column (int): Starting column number
+            end_column (int): Ending column number
+            repo_branch (str): Repository branch name
+            
+        Returns:
+            str: Complete GitHub URL with accurate line and column references
+        """
         try:
             if not repo_url or not repo_url.startswith('http'):
                 return ""
@@ -530,10 +659,13 @@ class SimpleASTExtractor:
                     # Convert git@github.com:owner/repo to https://github.com/owner/repo
                     repo_url = repo_url.replace('git@github.com:', 'https://github.com/')
                 
+                # Generate URL with accurate format including column information
                 if start_line == end_line:
-                    return f"{repo_url}/blob/main/{file_path}#L{start_line}"
+                    # Single line: #L{line}C{start_column}-L{line}C{end_column}
+                    return f"{repo_url}/blob/{repo_branch}/{file_path}#L{start_line}C{start_column}-L{start_line}C{end_column}"
                 else:
-                    return f"{repo_url}/blob/main/{file_path}#L{start_line}-L{end_line}"
+                    # Multiple lines: #L{start_line}C{start_column}-L{end_line}C{end_column}
+                    return f"{repo_url}/blob/{repo_branch}/{file_path}#L{start_line}C{start_column}-L{end_line}C{end_column}"
             
             return ""
         except Exception as e:
@@ -541,15 +673,46 @@ class SimpleASTExtractor:
             return ""
 
     def _generate_node_id(self, file_path: str, name: str, line: int) -> str:
-        """Generate unique ID for Neo4j nodes"""
+        """
+        Generate unique ID for Neo4j nodes.
+        
+        Args:
+            file_path (str): Path to the file
+            name (str): Name of the code entity
+            line (int): Line number
+            
+        Returns:
+            str: Unique identifier for the node
+        """
         unique_string = f"{file_path}:{name}:{line}"
         return hashlib.md5(unique_string.encode()).hexdigest()[:16]
 
+    def _generate_qualified_name(self, file_path: str, name: str) -> str:
+        """
+        Generate a qualified name for better uniqueness and searchability.
+        
+        Args:
+            file_path (str): Path to the file
+            name (str): Name of the code entity
+            
+        Returns:
+            str: Qualified name combining file path and entity name
+        """
+        # Convert file path to module-like notation
+        module_path = file_path.replace('/', '.').replace('\\', '.').replace('.py', '')
+        return f"{module_path}.{name}"
+
 
 class RepositoryAnalyzer:
-    """Main analyzer class for processing repositories"""
+    """Main analyzer class for processing repositories with enhanced metadata generation"""
     
     def __init__(self, output_dir: str = "output"):
+        """
+        Initialize the repository analyzer.
+        
+        Args:
+            output_dir (str): Directory to save analysis results
+        """
         self.extractor = SimpleASTExtractor()
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
@@ -564,13 +727,85 @@ class RepositoryAnalyzer:
             'errors': 0
         }
     
+    def _detect_default_branch(self, repo_url: str) -> str:
+        """
+        Detect the default branch of a GitHub repository.
+        
+        Args:
+            repo_url (str): Repository URL
+            
+        Returns:
+            str: Default branch name (main, master, or fallback)
+        """
+        try:
+            # Try to get remote branch info
+            cmd = ["git", "ls-remote", "--symref", repo_url, "HEAD"]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            
+            if result.returncode == 0:
+                # Parse the symref output to find default branch
+                for line in result.stdout.split('\n'):
+                    if line.startswith('ref: refs/heads/'):
+                        # Extract branch name and handle whitespace/tab + HEAD suffix
+                        branch_part = line.split('/')[-1]  # Gets "master	HEAD" or "master"
+                        branch = branch_part.split()[0]    # Gets "master" (first part before whitespace)
+                        logger.info(f"Detected default branch: {branch}")
+                        return branch
+            
+            # Fallback: try common branch names
+            for branch in ['main', 'master', 'develop']:
+                cmd = ["git", "ls-remote", repo_url, f"refs/heads/{branch}"]
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+                if result.returncode == 0 and result.stdout.strip():
+                    logger.info(f"Found branch: {branch}")
+                    return branch
+                    
+        except Exception as e:
+            logger.debug(f"Branch detection failed: {e}")
+        
+        # Default fallback
+        logger.info("Using default branch: main")
+        return "main"
+
+    def _extract_repo_name(self, repo_url: str) -> str:
+        """
+        Extract repository name from URL for file naming.
+        
+        Args:
+            repo_url (str): Repository URL
+            
+        Returns:
+            str: Repository name
+        """
+        try:
+            parsed = urlparse(repo_url)
+            if parsed.path:
+                # Remove .git extension if present
+                path = parsed.path.rstrip('.git')
+                # Get the last part of the path
+                return path.split('/')[-1] or 'unknown_repo'
+            return 'unknown_repo'
+        except:
+            return 'unknown_repo'
+
     def analyze_repository(self, repo_url: str) -> str:
-        """Analyze a repository and return the output file path"""
+        """
+        Analyze a GitHub repository and return the output file path.
+        
+        Args:
+            repo_url (str): URL of the GitHub repository
+            
+        Returns:
+            str: Path to the generated analysis JSON file
+        """
         logger.info(f"Starting analysis of repository: {repo_url}")
         
         # Extract repository name for file naming
         repo_name = self._extract_repo_name(repo_url)
         output_file = self.output_dir / f"{repo_name}_analysis.json"
+        
+        # Detect repository branch
+        repo_branch = self._detect_default_branch(repo_url)
         
         # Clone repository
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -583,10 +818,10 @@ class RepositoryAnalyzer:
             
             # Analyze the repository
             logger.info(f"Cloning repository to {repo_path}")
-            nodes = self._analyze_directory(str(repo_path), repo_url)
+            nodes = self._analyze_directory(str(repo_path), repo_url, repo_branch)
             
             # Generate metadata
-            metadata = self._generate_metadata(repo_url, repo_name, nodes)
+            metadata = self._generate_metadata(repo_url, repo_name, nodes, repo_branch)
             
             # Save results
             self._save_results(output_file, metadata, nodes)
@@ -595,9 +830,18 @@ class RepositoryAnalyzer:
             self._print_summary()
             
             return str(output_file)
-    
+
     def analyze_local_directory(self, directory_path: str, repo_url: str = "") -> str:
-        """Analyze a local directory"""
+        """
+        Analyze a local directory and generate code intelligence data.
+        
+        Args:
+            directory_path (str): Path to the local directory
+            repo_url (str): Optional repository URL for GitHub link generation
+            
+        Returns:
+            str: Path to the generated analysis JSON file
+        """
         logger.info(f"Starting analysis of local directory: {directory_path}")
         
         if not os.path.exists(directory_path):
@@ -608,11 +852,16 @@ class RepositoryAnalyzer:
         dir_name = os.path.basename(os.path.abspath(directory_path))
         output_file = self.output_dir / f"{dir_name}_analysis.json"
         
+        # Try to detect branch if repo_url is provided, otherwise default to main
+        repo_branch = "main"
+        if repo_url:
+            repo_branch = self._detect_default_branch(repo_url)
+        
         # Analyze the directory
-        nodes = self._analyze_directory(directory_path, repo_url)
+        nodes = self._analyze_directory(directory_path, repo_url, repo_branch)
         
         # Generate metadata
-        metadata = self._generate_metadata(repo_url or directory_path, dir_name, nodes)
+        metadata = self._generate_metadata(repo_url or directory_path, dir_name, nodes, repo_branch)
         
         # Save results
         self._save_results(output_file, metadata, nodes)
@@ -623,11 +872,20 @@ class RepositoryAnalyzer:
         return str(output_file)
     
     def _clone_repository(self, repo_url: str, temp_path: Path) -> Optional[Path]:
-        """Clone repository to temporary directory"""
+        """
+        Clone repository to temporary directory with optimized settings.
+        
+        Args:
+            repo_url (str): Repository URL
+            temp_path (Path): Temporary directory path
+            
+        Returns:
+            Optional[Path]: Path to cloned repository or None if failed
+        """
         try:
             repo_path = temp_path / "repo"
             
-            # Clone with git
+            # Clone with git (shallow clone for faster downloads)
             cmd = ["git", "clone", "--depth", "1", repo_url, str(repo_path)]
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
             
@@ -644,8 +902,18 @@ class RepositoryAnalyzer:
             logger.error(f"Error cloning repository: {e}")
             return None
     
-    def _analyze_directory(self, directory: str, repo_url: str) -> List[Dict]:
-        """Analyze all Python files in a directory"""
+    def _analyze_directory(self, directory: str, repo_url: str, repo_branch: str) -> List[Dict]:
+        """
+        Analyze all Python files in a directory with enhanced processing.
+        
+        Args:
+            directory (str): Directory path to analyze
+            repo_url (str): Repository URL
+            repo_branch (str): Repository branch name
+            
+        Returns:
+            List[Dict]: List of all extracted AST nodes
+        """
         all_nodes = []
         
         logger.info(f"Scanning directory: {directory}")
@@ -668,7 +936,7 @@ class RepositoryAnalyzer:
             try:
                 if self._should_analyze_file(file_path):
                     relative_path = os.path.relpath(file_path, directory)
-                    nodes = self._analyze_file(file_path, relative_path, repo_url)
+                    nodes = self._analyze_file(file_path, relative_path, repo_url, repo_branch)
                     all_nodes.extend(nodes)
                     self.stats['files_processed'] += 1
                     
@@ -683,7 +951,15 @@ class RepositoryAnalyzer:
         return all_nodes
     
     def _should_analyze_file(self, file_path: str) -> bool:
-        """Determine if a file should be analyzed (Python files only)"""
+        """
+        Determine if a file should be analyzed (Python files only with exclusions).
+        
+        Args:
+            file_path (str): Path to the file
+            
+        Returns:
+            bool: True if the file should be analyzed
+        """
         # Skip hidden files and directories
         if '/.git/' in file_path or '\\__pycache__\\' in file_path:
             return False
@@ -695,14 +971,25 @@ class RepositoryAnalyzer:
         # Only analyze Python files
         return file_path.endswith('.py')
     
-    def _analyze_file(self, file_path: str, relative_path: str, repo_url: str) -> List[Dict]:
-        """Analyze a single Python file"""
+    def _analyze_file(self, file_path: str, relative_path: str, repo_url: str, repo_branch: str) -> List[Dict]:
+        """
+        Analyze a single Python file and extract AST nodes.
+        
+        Args:
+            file_path (str): Absolute path to the file
+            relative_path (str): Relative path from repository root
+            repo_url (str): Repository URL
+            repo_branch (str): Repository branch name
+            
+        Returns:
+            List[Dict]: List of extracted AST nodes from the file
+        """
         try:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
             
-            # Extract AST nodes
-            nodes = self.extractor.extract_from_file(relative_path, content, repo_url)
+            # Extract AST nodes with enhanced metadata
+            nodes = self.extractor.extract_from_file(relative_path, content, repo_url, repo_branch)
             
             # Update statistics
             for node in nodes:
@@ -722,25 +1009,24 @@ class RepositoryAnalyzer:
             self.stats['errors'] += 1
             return []
     
-    def _extract_repo_name(self, repo_url: str) -> str:
-        """Extract repository name from URL"""
-        try:
-            parsed = urlparse(repo_url)
-            if parsed.path:
-                # Remove .git extension if present
-                path = parsed.path.rstrip('.git')
-                # Get the last part of the path
-                return path.split('/')[-1] or 'unknown_repo'
-            return 'unknown_repo'
-        except:
-            return 'unknown_repo'
-    
-    def _generate_metadata(self, repo_url: str, repo_name: str, nodes: List[Dict]) -> Dict:
-        """Generate metadata for the analysis"""
+    def _generate_metadata(self, repo_url: str, repo_name: str, nodes: List[Dict], repo_branch: str) -> Dict:
+        """
+        Generate comprehensive metadata for the analysis.
+        
+        Args:
+            repo_url (str): Repository URL
+            repo_name (str): Repository name
+            nodes (List[Dict]): List of extracted nodes
+            repo_branch (str): Repository branch name
+            
+        Returns:
+            Dict: Analysis metadata
+        """
         return {
             "analysis_metadata": {
                 "repo_url": repo_url,
                 "repo_name": repo_name,
+                "repo_branch": repo_branch,
                 "analysis_timestamp": int(time.time()),
                 "analyzer_version": "2.0.0",
                 "total_nodes": len(nodes),
@@ -751,7 +1037,14 @@ class RepositoryAnalyzer:
         }
     
     def _save_results(self, output_file: Path, metadata: Dict, nodes: List[Dict]) -> None:
-        """Save analysis results to JSON file"""
+        """
+        Save analysis results to JSON file with proper formatting.
+        
+        Args:
+            output_file (Path): Output file path
+            metadata (Dict): Analysis metadata
+            nodes (List[Dict]): Extracted nodes
+        """
         try:
             result = {
                 **metadata,
@@ -767,7 +1060,7 @@ class RepositoryAnalyzer:
             logger.error(f"Error saving results: {e}")
     
     def _print_summary(self) -> None:
-        """Print analysis summary"""
+        """Print comprehensive analysis summary with enhanced statistics."""
         print("\n" + "="*60)
         print("Analysis Complete!")
         print("="*60)
@@ -783,7 +1076,12 @@ class RepositoryAnalyzer:
 
 
 def run_smoke_tests():
-    """Run basic smoke tests to verify functionality"""
+    """
+    Run basic smoke tests to verify functionality.
+    
+    Returns:
+        bool: True if all tests pass, False otherwise
+    """
     print("Running smoke tests...")
     
     # Test 0: Tree-sitter availability
@@ -823,7 +1121,7 @@ import os
 from typing import Dict, List
 '''
     
-    nodes = extractor.extract_from_file("test.py", test_code, "https://github.com/test/repo")
+    nodes = extractor.extract_from_file("test.py", test_code, "https://github.com/test/repo", "main")
     
     if nodes:
         print(f"Extracted {len(nodes)} nodes successfully")
@@ -843,6 +1141,7 @@ from typing import Dict, List
         if func_nodes:
             func = func_nodes[0]
             print(f"   Sample function: {func.get('name')} with {len(func.get('parameters', []))} parameters")
+            print(f"   Sample qualified name: {func.get('qualified_name', 'N/A')}")
     else:
         print("No nodes extracted")
         return False
@@ -864,16 +1163,16 @@ from typing import Dict, List
     
     print("File type filtering working correctly")
     
-    # Test 3: GitHub URL generation
-    print("\nTest 3: GitHub URL generation...")
+    # Test 3: Enhanced GitHub URL generation
+    print("\nTest 3: Enhanced GitHub URL generation...")
     test_urls = [
-        ("https://github.com/owner/repo", "src/main.py", 10, 20),
-        ("https://github.com/owner/repo.git", "utils.py", 5, 5),
+        ("https://github.com/owner/repo", "src/main.py", 10, 20, 1, 50, "main"),
+        ("https://github.com/owner/repo.git", "utils.py", 5, 5, 1, 25, "master"),
     ]
     
-    for repo_url, file_path, start, end in test_urls:
-        github_url = extractor._generate_github_url(repo_url, file_path, start, end)
-        if "github.com" in github_url and file_path in github_url:
+    for repo_url, file_path, start_line, end_line, start_col, end_col, branch in test_urls:
+        github_url = extractor._generate_github_url(repo_url, file_path, start_line, end_line, start_col, end_col, branch)
+        if "github.com" in github_url and file_path in github_url and f"L{start_line}C{start_col}" in github_url:
             print(f"Generated URL: {github_url}")
         else:
             print(f"Invalid URL generated: {github_url}")
@@ -884,7 +1183,7 @@ from typing import Dict, List
 
 
 def main():
-    """Main entry point"""
+    """Main entry point with comprehensive CLI interface"""
     parser = argparse.ArgumentParser(
         description="Repository AST Analyzer - Extract code intelligence from Python repositories",
         formatter_class=argparse.RawDescriptionHelpFormatter,

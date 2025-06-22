@@ -12,9 +12,11 @@ Features:
 - Vector embeddings for semantic search
 - Batch processing for performance
 - Comprehensive relationship mapping
-- Query examples and utilities
+- Enhanced query examples and utilities
+- Semantic-based function discovery
+- Accurate GitHub URL preservation
 
-Author: AI Assistant
+Author: Praveen
 License: MIT
 """
 
@@ -28,7 +30,9 @@ from typing import Dict, List, Optional, Any, Tuple
 import hashlib
 import asyncio
 from dataclasses import dataclass
+import dotenv
 
+dotenv.load_dotenv()
 # Core imports
 from neo4j import GraphDatabase, Driver
 from neo4j.exceptions import ServiceUnavailable, Neo4jError
@@ -38,11 +42,16 @@ EMBEDDINGS_AVAILABLE = False
 EMBEDDING_ERROR = None
 
 try:
-    # Try OpenAI first (most robust)
+    # Try OpenAI first (most robust) - new v1.0+ syntax
+    from openai import OpenAI
     import openai
     OPENAI_AVAILABLE = True
-except ImportError:
+    logger_temp = logging.getLogger(__name__)
+    logger_temp.info(f"OpenAI library version: {openai.__version__}")
+except ImportError as e:
     OPENAI_AVAILABLE = False
+    logger_temp = logging.getLogger(__name__)
+    logger_temp.warning(f"OpenAI import failed: {e}")
 
 try:
     # Fallback to Sentence Transformers
@@ -64,7 +73,17 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Neo4jConfig:
-    """Neo4j connection configuration"""
+    """
+    Neo4j connection configuration for AuraDB instances.
+    
+    Attributes:
+        uri (str): Neo4j connection URI
+        username (str): Database username
+        password (str): Database password
+        database (str): Database name
+        instance_id (str): AuraDB instance ID
+        instance_name (str): Human-readable instance name
+    """
     uri: str
     username: str
     password: str
@@ -74,7 +93,17 @@ class Neo4jConfig:
 
 @dataclass
 class ImportStats:
-    """Statistics tracking for import process"""
+    """
+    Statistics tracking for the import process.
+    
+    Attributes:
+        nodes_created (int): Number of nodes created
+        relationships_created (int): Number of relationships created
+        embeddings_created (int): Number of embeddings generated
+        errors (int): Number of errors encountered
+        start_time (float): Import start timestamp
+        end_time (float): Import end timestamp
+    """
     nodes_created: int = 0
     relationships_created: int = 0
     embeddings_created: int = 0
@@ -82,129 +111,241 @@ class ImportStats:
     start_time: float = 0
     end_time: float = 0
 
+
 class EmbeddingGenerator:
-    """Handle text embeddings for vector similarity search"""
+    """
+    Optimized embedding generator with batching and rate limiting.
+    """
     
     def __init__(self, model_type: str = "auto"):
         self.model_type = model_type
         self.model = None
-        self.embedding_dim = 384  # Default dimension
+        self.embedding_dim = 384
+        self.openai_client = None
+        
+        # Batching configuration
+        self.EMBEDDING_BATCH_SIZE = 100  # OpenAI allows up to 2048 inputs per request
+        self.REQUEST_DELAY = 0.1  # 100ms between requests to avoid rate limits
         
         self._initialize_model()
     
     def _initialize_model(self):
-        """Initialize the embedding model with fallbacks"""
+        """Initialize the embedding model with fallback support."""
         global EMBEDDINGS_AVAILABLE, EMBEDDING_ERROR
         
         if self.model_type == "openai" or (self.model_type == "auto" and OPENAI_AVAILABLE):
             try:
-                # Check for OpenAI API key
                 api_key = os.getenv('OPENAI_API_KEY')
                 if not api_key:
                     raise ValueError("OPENAI_API_KEY environment variable not set")
                 
-                openai.api_key = api_key
+                # Initialize OpenAI client with new v1.0+ syntax
+                self.openai_client = OpenAI(api_key=api_key)
+                
+                # Test with a small request
+                test_response = self.openai_client.embeddings.create(
+                    model="text-embedding-3-small",
+                    input="test"
+                )
+                
                 self.model_type = "openai"
-                self.embedding_dim = 1536  # OpenAI ada-002 dimension
+                self.embedding_dim = 1536
                 EMBEDDINGS_AVAILABLE = True
-                logger.info("Initialized OpenAI embeddings (ada-002)")
+                logger.info("[OK] Initialized OpenAI embeddings (text-embedding-3-small)")
+                logger.info(f"[BATCH] Batch size: {self.EMBEDDING_BATCH_SIZE} texts per request")
                 return
             except Exception as e:
                 logger.warning(f"OpenAI initialization failed: {e}")
+                self.openai_client = None
         
         if self.model_type == "sentence_transformers" or (self.model_type == "auto" and SENTENCE_TRANSFORMERS_AVAILABLE):
             try:
-                # Use a good general-purpose model
-                model_name = "all-MiniLM-L6-v2"  # Fast and good quality
+                model_name = "all-MiniLM-L6-v2"
                 self.model = SentenceTransformer(model_name)
                 self.model_type = "sentence_transformers"
                 self.embedding_dim = self.model.get_sentence_embedding_dimension()
                 EMBEDDINGS_AVAILABLE = True
-                logger.info(f"Initialized Sentence Transformers: {model_name}")
+                logger.info("[OK] Initialized Sentence Transformers: {model_name}")
                 return
             except Exception as e:
                 logger.warning(f"Sentence Transformers initialization failed: {e}")
         
-        # No embeddings available
         EMBEDDINGS_AVAILABLE = False
-        EMBEDDING_ERROR = "No embedding models available. Install: pip install openai sentence-transformers"
-        logger.warning(f"WARNING: {EMBEDDING_ERROR}")
-        logger.warning("Vector similarity search will not be available")
+        EMBEDDING_ERROR = "No embedding models available"
+        logger.warning("[WARN] No embeddings available")
+    
+    def generate_embeddings_batch(self, texts: List[str]) -> List[Optional[List[float]]]:
+        """
+        Generate embeddings for multiple texts in batches for efficiency.
+        
+        Args:
+            texts (List[str]): List of texts to embed
+            
+        Returns:
+            List[Optional[List[float]]]: List of embeddings (same order as input)
+        """
+        if not EMBEDDINGS_AVAILABLE or not texts:
+            return [None] * len(texts)
+        
+        all_embeddings = []
+        total_batches = (len(texts) + self.EMBEDDING_BATCH_SIZE - 1) // self.EMBEDDING_BATCH_SIZE
+        
+        logger.info(f"[BATCH] Generating embeddings for {len(texts)} texts in {total_batches} batches...")
+        
+        for i in range(0, len(texts), self.EMBEDDING_BATCH_SIZE):
+            batch = texts[i:i + self.EMBEDDING_BATCH_SIZE]
+            batch_num = (i // self.EMBEDDING_BATCH_SIZE) + 1
+            
+            try:
+                if self.model_type == "openai" and self.openai_client:
+                    # Rate limiting
+                    if i > 0:
+                        time.sleep(self.REQUEST_DELAY)
+                    
+                    logger.info(f"[API] Batch {batch_num}/{total_batches}: Requesting {len(batch)} embeddings...")
+                    
+                    response = self.openai_client.embeddings.create(
+                        model="text-embedding-3-small",
+                        input=[text[:8000] for text in batch]  # Truncate long texts
+                    )
+                    
+                    batch_embeddings = [data.embedding for data in response.data]
+                    all_embeddings.extend(batch_embeddings)
+                    
+                    logger.info(f"[OK] Batch {batch_num}/{total_batches} completed ({len(batch_embeddings)} embeddings)")
+                
+                elif self.model_type == "sentence_transformers" and self.model:
+                    logger.info(f"[PROC] Batch {batch_num}/{total_batches}: Processing {len(batch)} texts...")
+                    
+                    batch_embeddings = self.model.encode(batch)
+                    all_embeddings.extend([emb.tolist() for emb in batch_embeddings])
+                    
+                    logger.info(f"[OK] Batch {batch_num}/{total_batches} completed")
+                
+                else:
+                    # Fallback: return None for this batch
+                    all_embeddings.extend([None] * len(batch))
+                    
+            except Exception as e:
+                logger.error(f"[ERROR] Batch {batch_num}/{total_batches} failed: {e}")
+                # Add None embeddings for failed batch
+                all_embeddings.extend([None] * len(batch))
+                
+                # Exponential backoff for rate limit errors
+                if "rate_limit" in str(e).lower():
+                    wait_time = min(2 ** (batch_num % 5), 30)  # Max 30 seconds
+                    logger.warning(f"[WAIT] Rate limited, waiting {wait_time}s...")
+                    time.sleep(wait_time)
+        
+        logger.info(f"[DONE] Embedding generation complete: {len([e for e in all_embeddings if e is not None])}/{len(texts)} successful")
+        return all_embeddings
+    
+    def prepare_code_texts(self, nodes: List[Dict]) -> List[str]:
+        """
+        Prepare rich text representations for code nodes.
+        
+        Args:
+            nodes (List[Dict]): List of code nodes
+            
+        Returns:
+            List[str]: List of prepared texts for embedding
+        """
+        texts = []
+        for node in nodes:
+            text_parts = []
+            
+            # Add node name and type
+            text_parts.append(f"{node.get('node_type', '')} {node.get('name', '')}")
+            
+            # Add semantic information
+            if node.get('purpose'):
+                text_parts.append(f"purpose: {node['purpose']}")
+            
+            if node.get('domain'):
+                text_parts.append(f"domain: {node['domain']}")
+            
+            if node.get('technologies'):
+                text_parts.append(f"technologies: {', '.join(node['technologies'])}")
+            
+            if node.get('operations'):
+                text_parts.append(f"operations: {', '.join(node['operations'])}")
+            
+            # Add docstring if available
+            if node.get('docstring'):
+                text_parts.append(node['docstring'])
+            
+            # Add parameters for functions
+            if node.get('parameters'):
+                text_parts.append(f"parameters: {', '.join(node['parameters'])}")
+            
+            # Add limited content
+            if node.get('content'):
+                content = node['content'][:500]  # Limit content length
+                text_parts.append(content)
+            
+            # Add file path context
+            if node.get('location', {}).get('file_path'):
+                file_path = node['location']['file_path']
+                path_parts = file_path.replace('\\', '/').split('/')
+                meaningful_parts = [p for p in path_parts if p and not p.startswith('.')]
+                text_parts.append(f"file: {'/'.join(meaningful_parts[-2:])}")
+            
+            combined_text = " | ".join(text_parts)
+            texts.append(combined_text)
+        
+        return texts
     
     def generate_embedding(self, text: str) -> Optional[List[float]]:
-        """Generate embedding for text"""
-        if not EMBEDDINGS_AVAILABLE:
-            return None
-        
-        try:
-            if self.model_type == "openai":
-                response = openai.Embedding.create(
-                    model="text-embedding-ada-002",
-                    input=text[:8000]  # OpenAI limit
-                )
-                return response['data'][0]['embedding']
-            
-            elif self.model_type == "sentence_transformers":
-                embedding = self.model.encode(text)
-                return embedding.tolist()
-            
-        except Exception as e:
-            logger.debug(f"Embedding generation failed: {e}")
-            return None
+        """
+        Generate single embedding (uses batch method for consistency).
+        """
+        embeddings = self.generate_embeddings_batch([text])
+        return embeddings[0] if embeddings else None
     
     def generate_code_embedding(self, node: Dict) -> Optional[List[float]]:
-        """Generate specialized embedding for code nodes"""
-        if not EMBEDDINGS_AVAILABLE:
-            return None
-        
-        # Create rich text for embedding
-        text_parts = []
-        
-        # Add node name and type
-        text_parts.append(f"{node.get('node_type', '')} {node.get('name', '')}")
-        
-        # Add docstring if available
-        if node.get('docstring'):
-            text_parts.append(node['docstring'])
-        
-        # Add parameters for functions
-        if node.get('parameters'):
-            text_parts.append(f"parameters: {', '.join(node['parameters'])}")
-        
-        # Add content (limited)
-        if node.get('content'):
-            content = node['content'][:500]  # Limit content length
-            text_parts.append(content)
-        
-        # Add file path context
-        if node.get('location', {}).get('file_path'):
-            file_path = node['location']['file_path']
-            # Extract meaningful path components
-            path_parts = file_path.replace('\\', '/').split('/')
-            meaningful_parts = [p for p in path_parts if p and not p.startswith('.')]
-            text_parts.append(f"file: {'/'.join(meaningful_parts[-2:])}")
-        
-        combined_text = " | ".join(text_parts)
-        return self.generate_embedding(combined_text)
+        """
+        Generate single code embedding (uses batch method for consistency).
+        """
+        texts = self.prepare_code_texts([node])
+        embeddings = self.generate_embeddings_batch(texts)
+        return embeddings[0] if embeddings else None
 
 
 class Neo4jCodeImporter:
-    """Main importer for Neo4j AuraDB with code intelligence features"""
+    """
+    Main importer for Neo4j AuraDB with enhanced code intelligence features.
+    
+    This class handles the complete process of importing AST analysis results
+    into Neo4j, creating optimized schemas, and establishing comprehensive
+    relationships for code navigation and discovery.
+    """
     
     def __init__(self, config: Neo4jConfig, embedding_model: str = "auto"):
+        """
+        Initialize the Neo4j code importer.
+        
+        Args:
+            config (Neo4jConfig): Neo4j connection configuration
+            embedding_model (str): Embedding model type to use
+        """
         self.config = config
         self.driver: Optional[Driver] = None
         self.embedding_generator = EmbeddingGenerator(embedding_model)
         self.stats = ImportStats()
         
-        # Batch sizes for performance
+        # Batch sizes for performance optimization
         self.BATCH_SIZE = 1000
         self.RELATIONSHIP_BATCH_SIZE = 5000
         
         self._connect()
     
     def _connect(self):
-        """Establish connection to Neo4j AuraDB"""
+        """
+        Establish connection to Neo4j AuraDB with proper error handling.
+        
+        Raises:
+            Exception: If connection cannot be established
+        """
         try:
             logger.info(f"Connecting to Neo4j AuraDB: {self.config.instance_name}")
             
@@ -228,12 +369,17 @@ class Neo4jCodeImporter:
             raise
     
     def close(self):
-        """Close Neo4j connection"""
+        """Close Neo4j connection and cleanup resources."""
         if self.driver:
             self.driver.close()
     
     def clear_database(self, confirm: bool = False):
-        """Clear all data from database - USE WITH CAUTION"""
+        """
+        Clear all data from database - USE WITH EXTREME CAUTION.
+        
+        Args:
+            confirm (bool): Must be True to actually clear the database
+        """
         if not confirm:
             logger.warning("Database clear not confirmed - skipping")
             return
@@ -247,7 +393,12 @@ class Neo4jCodeImporter:
         logger.info("Database cleared")
     
     def create_schema(self):
-        """Create optimized schema with indexes and constraints"""
+        """
+        Create optimized schema with indexes and constraints for code intelligence.
+        
+        This method sets up the database schema optimized for code navigation,
+        search, and relationship discovery.
+        """
         logger.info("Creating Neo4j schema...")
         
         with self.driver.session() as session:
@@ -274,7 +425,15 @@ class Neo4jCodeImporter:
                 "CREATE INDEX file_name_idx IF NOT EXISTS FOR (f:File) ON (f.name)",
                 "CREATE INDEX node_type_idx IF NOT EXISTS FOR (n) ON (n.node_type)",
                 "CREATE INDEX complexity_idx IF NOT EXISTS FOR (f:Function) ON (f.complexity)",
-                "CREATE INDEX qualified_name_idx IF NOT EXISTS FOR (f:Function) ON (f.qualified_name)"
+                "CREATE INDEX qualified_name_idx IF NOT EXISTS FOR (f:Function) ON (f.qualified_name)",
+                
+                # Enhanced indexes for semantic search
+                "CREATE INDEX purpose_idx IF NOT EXISTS FOR (f:Function) ON (f.purpose)",
+                "CREATE INDEX domain_idx IF NOT EXISTS FOR (f:Function) ON (f.domain)",
+                "CREATE INDEX operations_idx IF NOT EXISTS FOR (f:Function) ON (f.operations)",
+                "CREATE INDEX technologies_idx IF NOT EXISTS FOR (f:Function) ON (f.technologies)",
+                "CREATE INDEX class_purpose_idx IF NOT EXISTS FOR (c:Class) ON (c.purpose)",
+                "CREATE INDEX class_domain_idx IF NOT EXISTS FOR (c:Class) ON (c.domain)"
             ]
             
             for index in indexes:
@@ -316,10 +475,18 @@ class Neo4jCodeImporter:
                 except Exception as e:
                     logger.warning(f"Vector index creation failed: {e}")
         
-        logger.info("Basic schema creation completed")
+        logger.info("Enhanced schema creation completed")
     
     def import_analysis_file(self, json_file_path: str):
-        """Import AST analysis JSON file into Neo4j"""
+        """
+        Import AST analysis JSON file into Neo4j with comprehensive processing.
+        
+        This method orchestrates the complete import process including metadata,
+        files, nodes, relationships, and enhanced code intelligence features.
+        
+        Args:
+            json_file_path (str): Path to the AST analysis JSON file
+        """
         logger.info(f"Starting import from: {json_file_path}")
         self.stats.start_time = time.time()
         
@@ -332,57 +499,87 @@ class Neo4jCodeImporter:
         
         logger.info(f"Loaded {len(nodes)} nodes from analysis")
         logger.info(f"Repository: {metadata.get('repo_name', 'Unknown')}")
+        logger.info(f"Branch: {metadata.get('repo_branch', 'main')}")
         
-        # Import in stages
+        # Import in stages for optimal performance
         self._import_repository_metadata(metadata)
         self._import_files(nodes)
         self._import_nodes_batch(nodes)
         self._create_relationships(nodes)
-        self._create_enhanced_relationships()  # NEW: Enhanced go-to-definition support
+        self._create_enhanced_relationships()
         
         self.stats.end_time = time.time()
         self._print_import_summary()
     
     def _import_repository_metadata(self, metadata: Dict):
-        """Import repository-level metadata"""
+        """
+        Import repository-level metadata with enhanced information.
+        
+        Args:
+            metadata (Dict): Repository metadata from analysis
+        """
         logger.info("Importing repository metadata...")
         
         with self.driver.session() as session:
             query = """
             MERGE (repo:Repository {url: $repo_url})
             SET repo.name = $repo_name,
+                repo.branch = $repo_branch,
                 repo.analysis_timestamp = $timestamp,
                 repo.total_nodes = $total_nodes,
                 repo.analyzer_version = $analyzer_version,
-                repo.tree_sitter_available = $tree_sitter
+                repo.tree_sitter_available = $tree_sitter,
+                repo.semantic_analysis_enabled = $semantic_analysis
             RETURN repo
             """
             
             session.run(query, {
                 'repo_url': metadata.get('repo_url', ''),
                 'repo_name': metadata.get('repo_name', 'Unknown'),
+                'repo_branch': metadata.get('repo_branch', 'main'),
                 'timestamp': metadata.get('analysis_timestamp', 0),
                 'total_nodes': metadata.get('total_nodes', 0),
                 'analyzer_version': metadata.get('analyzer_version', ''),
-                'tree_sitter': metadata.get('tree_sitter_available', False)
+                'tree_sitter': metadata.get('tree_sitter_available', False),
+                'semantic_analysis': metadata.get('semantic_analysis_enabled', False)
             })
         
         logger.info("Repository metadata imported")
     
     def _import_files(self, nodes: List[Dict]):
-        """Import file nodes and create file hierarchy"""
+        """
+        Import file nodes and create hierarchical file structure.
+        
+        Args:
+            nodes (List[Dict]): List of all nodes from analysis
+        """
         logger.info("Importing file structure...")
         
-        # Extract unique files
+        # Extract unique files with enhanced metadata
         files = {}
         for node in nodes:
             file_path = node.get('location', {}).get('file_path')
             if file_path and file_path not in files:
+                # Extract branch from first node's repo_url if available
+                repo_branch = "main"  # default
+                if hasattr(nodes[0], 'get') and nodes[0].get('repo_url'):
+                    # Try to extract branch from github_url pattern
+                    github_url = node.get('github_url', '')
+                    if '/blob/' in github_url:
+                        try:
+                            branch_part = github_url.split('/blob/')[1].split('/')[0]
+                            if branch_part:
+                                repo_branch = branch_part
+                        except:
+                            pass
+                
                 files[file_path] = {
                     'path': file_path,
                     'name': file_path.split('/')[-1],
                     'extension': file_path.split('.')[-1] if '.' in file_path else '',
-                    'directory': '/'.join(file_path.split('/')[:-1]) if '/' in file_path else ''
+                    'directory': '/'.join(file_path.split('/')[:-1]) if '/' in file_path else '',
+                    'repo_url': node.get('repo_url', ''),
+                    'github_url': f"{node.get('repo_url', '').rstrip('.git')}/blob/{repo_branch}/{file_path}" if node.get('repo_url') else ''
                 }
         
         # Batch insert files
@@ -396,6 +593,8 @@ class Neo4jCodeImporter:
                 SET f.name = file.name,
                     f.extension = file.extension,
                     f.directory = file.directory,
+                    f.repo_url = file.repo_url,
+                    f.github_url = file.github_url,
                     f.created_at = timestamp()
                 """
                 
@@ -404,44 +603,73 @@ class Neo4jCodeImporter:
         logger.info(f"Imported {len(files)} files")
     
     def _import_nodes_batch(self, nodes: List[Dict]):
-        """Import code nodes in batches with embeddings"""
-        logger.info("Importing code nodes...")
+        """
+        Import code nodes in batches with optimized embedding generation.
+        
+        Args:
+            nodes (List[Dict]): List of all nodes to import
+        """
+        logger.info("[START] Starting optimized node import with batch embeddings...")
         
         # Group nodes by type for efficient processing
         functions = [n for n in nodes if n.get('node_type') == 'function']
         classes = [n for n in nodes if n.get('node_type') == 'class']
         imports = [n for n in nodes if n.get('node_type') == 'import']
         
-        # Import each type
-        self._import_functions(functions)
-        self._import_classes(classes)
-        self._import_imports(imports)
+        logger.info(f"[INFO] Node breakdown: {len(functions)} functions, {len(classes)} classes, {len(imports)} imports")
+        
+        # Import each type with enhanced processing
+        if functions:
+            self._import_functions(functions)
+        
+        if classes:
+            self._import_classes(classes)
+        
+        if imports:
+            self._import_imports(imports)
     
     def _import_functions(self, functions: List[Dict]):
-        """Import function nodes with embeddings"""
-        logger.info(f"Importing {len(functions)} functions...")
+        """
+        Import function nodes with batched embeddings for optimal performance.
         
+        Args:
+            functions (List[Dict]): List of function nodes to import
+        """
+        logger.info(f"[START] Importing {len(functions)} functions with batch embeddings...")
+        
+        # Generate ALL embeddings in batches FIRST
+        if EMBEDDINGS_AVAILABLE:
+            logger.info("[PREP] Preparing texts for embedding...")
+            texts = self.embedding_generator.prepare_code_texts(functions)
+            
+            logger.info("[BATCH] Generating embeddings in batches...")
+            embeddings = self.embedding_generator.generate_embeddings_batch(texts)
+            
+            # Assign embeddings back to functions
+            successful_embeddings = 0
+            for func, embedding in zip(functions, embeddings):
+                if embedding:
+                    func['embedding'] = embedding
+                    successful_embeddings += 1
+            
+            self.stats.embeddings_created += successful_embeddings
+            logger.info(f"[OK] Generated {successful_embeddings}/{len(functions)} function embeddings")
+        
+        # Now import functions to Neo4j in batches
         with self.driver.session() as session:
             for i in range(0, len(functions), self.BATCH_SIZE):
                 batch = functions[i:i + self.BATCH_SIZE]
-                
-                # Generate embeddings for batch
-                for func in batch:
-                    if EMBEDDINGS_AVAILABLE:
-                        embedding = self.embedding_generator.generate_code_embedding(func)
-                        if embedding:
-                            func['embedding'] = embedding
-                            self.stats.embeddings_created += 1
                 
                 query = """
                 UNWIND $functions as func
                 MERGE (f:Function {id: func.id})
                 SET f.name = func.name,
+                    f.qualified_name = COALESCE(func.qualified_name, func.name),
                     f.file_path = func.location.file_path,
                     f.line_start = func.location.line_start,
                     f.line_end = func.location.line_end,
-                    f.column_start = func.location.column_start,
-                    f.column_end = func.location.column_end,
+                    f.column_start = COALESCE(func.location.column_start, 0),
+                    f.column_end = COALESCE(func.location.column_end, 0),
                     f.content = func.content,
                     f.complexity = func.complexity,
                     f.is_async = func.is_async,
@@ -466,14 +694,21 @@ class Neo4jCodeImporter:
                 session.run(query, {'functions': batch})
                 self.stats.nodes_created += len(batch)
                 
-                if (i + self.BATCH_SIZE) % (self.BATCH_SIZE * 5) == 0:
-                    logger.info(f"Imported {min(i + self.BATCH_SIZE, len(functions))} functions...")
+                # Progress logging
+                imported_count = min(i + self.BATCH_SIZE, len(functions))
+                if imported_count % (self.BATCH_SIZE * 2) == 0 or imported_count == len(functions):
+                    logger.info(f"[SAVE] Imported {imported_count}/{len(functions)} functions to Neo4j...")
         
         # Create parameters as separate nodes
         self._import_function_parameters(functions)
     
     def _import_function_parameters(self, functions: List[Dict]):
-        """Import function parameters as separate nodes"""
+        """
+        Import function parameters as separate nodes with relationships.
+        
+        Args:
+            functions (List[Dict]): List of function nodes
+        """
         logger.info("Creating parameter nodes and relationships...")
         
         parameters = []
@@ -512,28 +747,47 @@ class Neo4jCodeImporter:
                 self.stats.relationships_created += len(batch)
     
     def _import_classes(self, classes: List[Dict]):
-        """Import class nodes with embeddings"""
-        logger.info(f"Importing {len(classes)} classes...")
+        """
+        Import class nodes with batched embeddings for optimal performance.
         
+        Args:
+            classes (List[Dict]): List of class nodes to import
+        """
+        logger.info(f"[START] Importing {len(classes)} classes with batch embeddings...")
+        
+        # Generate ALL embeddings in batches FIRST
+        if EMBEDDINGS_AVAILABLE:
+            logger.info("[PREP] Preparing texts for embedding...")
+            texts = self.embedding_generator.prepare_code_texts(classes)
+            
+            logger.info("[BATCH] Generating embeddings in batches...")
+            embeddings = self.embedding_generator.generate_embeddings_batch(texts)
+            
+            # Assign embeddings back to classes
+            successful_embeddings = 0
+            for cls, embedding in zip(classes, embeddings):
+                if embedding:
+                    cls['embedding'] = embedding
+                    successful_embeddings += 1
+            
+            self.stats.embeddings_created += successful_embeddings
+            logger.info(f"[OK] Generated {successful_embeddings}/{len(classes)} class embeddings")
+        
+        # Now import classes to Neo4j in batches
         with self.driver.session() as session:
             for i in range(0, len(classes), self.BATCH_SIZE):
                 batch = classes[i:i + self.BATCH_SIZE]
-                
-                # Generate embeddings for batch
-                for cls in batch:
-                    if EMBEDDINGS_AVAILABLE:
-                        embedding = self.embedding_generator.generate_code_embedding(cls)
-                        if embedding:
-                            cls['embedding'] = embedding
-                            self.stats.embeddings_created += 1
                 
                 query = """
                 UNWIND $classes as cls
                 MERGE (c:Class {id: cls.id})
                 SET c.name = cls.name,
+                    c.qualified_name = COALESCE(cls.qualified_name, cls.name),
                     c.file_path = cls.location.file_path,
                     c.line_start = cls.location.line_start,
                     c.line_end = cls.location.line_end,
+                    c.column_start = COALESCE(cls.location.column_start, 0),
+                    c.column_end = COALESCE(cls.location.column_end, 0),
                     c.content = cls.content,
                     c.docstring = cls.docstring,
                     c.github_url = cls.github_url,
@@ -554,10 +808,20 @@ class Neo4jCodeImporter:
                 
                 session.run(query, {'classes': batch})
                 self.stats.nodes_created += len(batch)
+                
+                # Progress logging
+                imported_count = min(i + self.BATCH_SIZE, len(classes))
+                if imported_count % (self.BATCH_SIZE * 2) == 0 or imported_count == len(classes):
+                    logger.info(f"[SAVE] Imported {imported_count}/{len(classes)} classes to Neo4j...")
     
     def _import_imports(self, imports: List[Dict]):
-        """Import import nodes and create module relationships"""
-        logger.info(f"Importing {len(imports)} imports...")
+        """
+        Import import nodes and create module relationships with dependency categorization.
+        
+        Args:
+            imports (List[Dict]): List of import nodes to import
+        """
+        logger.info(f"Importing {len(imports)} imports with dependency information...")
         
         with self.driver.session() as session:
             for i in range(0, len(imports), self.BATCH_SIZE):
@@ -571,6 +835,9 @@ class Neo4jCodeImporter:
                     i.import_type = imp.import_type,
                     i.file_path = imp.location.file_path,
                     i.line_start = imp.location.line_start,
+                    i.line_end = COALESCE(imp.location.line_end, imp.location.line_start),
+                    i.column_start = COALESCE(imp.location.column_start, 0),
+                    i.column_end = COALESCE(imp.location.column_end, 0),
                     i.content = imp.content,
                     i.github_url = imp.github_url,
                     i.created_at = imp.created_at,
@@ -593,7 +860,12 @@ class Neo4jCodeImporter:
                 self.stats.relationships_created += len(batch) * 2
     
     def _create_relationships(self, nodes: List[Dict]):
-        """Create relationships between code elements"""
+        """
+        Create relationships between code elements with enhanced accuracy.
+        
+        Args:
+            nodes (List[Dict]): List of all nodes for relationship creation
+        """
         logger.info("Creating code relationships...")
         
         # Create function call relationships
@@ -606,33 +878,66 @@ class Neo4jCodeImporter:
         self._create_class_methods(nodes)
     
     def _create_function_calls(self, nodes: List[Dict]):
-        """Create CALLS relationships between functions"""
+        """
+        Create CALLS relationships between functions with improved accuracy.
+        
+        Args:
+            nodes (List[Dict]): List of all nodes
+        """
         logger.info("Creating function call relationships...")
         
         function_calls = []
         functions = [n for n in nodes if n.get('node_type') == 'function']
         
-        # Build function name to ID mapping
+        # Build function name to ID mapping with qualified names for better accuracy
         func_name_to_id = {}
+        qualified_name_to_id = {}
+        
         for func in functions:
             name = func.get('name')
+            qualified_name = func.get('qualified_name')
+            func_id = func.get('id')
+            
             if name:
                 if name not in func_name_to_id:
                     func_name_to_id[name] = []
-                func_name_to_id[name].append(func.get('id'))
+                func_name_to_id[name].append(func_id)
+            
+            if qualified_name:
+                qualified_name_to_id[qualified_name] = func_id
         
-        # Create call relationships
+        # Create call relationships with priority for qualified names
         for func in functions:
             caller_id = func.get('id')
+            caller_file = func.get('location', {}).get('file_path', '')
+            
             for called_func in func.get('calls', []):
+                # First try qualified name match within same file
+                caller_module = caller_file.replace('/', '.').replace('\\', '.').replace('.py', '')
+                qualified_called = f"{caller_module}.{called_func}"
+                
+                if qualified_called in qualified_name_to_id:
+                    callee_id = qualified_name_to_id[qualified_called]
+                    if caller_id != callee_id:
+                        function_calls.append({
+                            'caller_id': caller_id,
+                            'callee_id': callee_id,
+                            'called_name': called_func,
+                            'resolution_type': 'qualified'
+                        })
+                        continue
+                
+                # Fallback to name-based matching
                 if called_func in func_name_to_id:
                     for callee_id in func_name_to_id[called_func]:
-                        if caller_id != callee_id:  # No self-calls
+                        if caller_id != callee_id:
                             function_calls.append({
                                 'caller_id': caller_id,
                                 'callee_id': callee_id,
-                                'called_name': called_func
+                                'called_name': called_func,
+                                'resolution_type': 'name_based'
                             })
+                            break  # Only take first match to avoid duplicates
         
         if not function_calls:
             logger.info("No function calls to create")
@@ -650,6 +955,7 @@ class Neo4jCodeImporter:
                 MATCH (callee:Function {id: call.callee_id})
                 MERGE (caller)-[r:CALLS]->(callee)
                 SET r.called_name = call.called_name,
+                    r.resolution_type = call.resolution_type,
                     r.created_at = timestamp()
                 """
                 
@@ -657,32 +963,65 @@ class Neo4jCodeImporter:
                 self.stats.relationships_created += len(batch)
     
     def _create_class_inheritance(self, nodes: List[Dict]):
-        """Create INHERITS relationships between classes"""
+        """
+        Create INHERITS relationships between classes with enhanced matching.
+        
+        Args:
+            nodes (List[Dict]): List of all nodes
+        """
         logger.info("Creating class inheritance relationships...")
         
         classes = [n for n in nodes if n.get('node_type') == 'class']
         
-        # Build class name to ID mapping
+        # Build class name to ID mapping with qualified names
         class_name_to_id = {}
+        qualified_name_to_id = {}
+        
         for cls in classes:
             name = cls.get('name')
+            qualified_name = cls.get('qualified_name')
+            cls_id = cls.get('id')
+            
             if name:
                 if name not in class_name_to_id:
                     class_name_to_id[name] = []
-                class_name_to_id[name].append(cls.get('id'))
+                class_name_to_id[name].append(cls_id)
+            
+            if qualified_name:
+                qualified_name_to_id[qualified_name] = cls_id
         
         inheritance = []
         for cls in classes:
             child_id = cls.get('id')
+            child_file = cls.get('location', {}).get('file_path', '')
+            
             for base_class in cls.get('base_classes', []):
+                # Try qualified name first
+                child_module = child_file.replace('/', '.').replace('\\', '.').replace('.py', '')
+                qualified_base = f"{child_module}.{base_class}"
+                
+                if qualified_base in qualified_name_to_id:
+                    parent_id = qualified_name_to_id[qualified_base]
+                    if child_id != parent_id:
+                        inheritance.append({
+                            'child_id': child_id,
+                            'parent_id': parent_id,
+                            'base_name': base_class,
+                            'resolution_type': 'qualified'
+                        })
+                        continue
+                
+                # Fallback to name-based matching
                 if base_class in class_name_to_id:
                     for parent_id in class_name_to_id[base_class]:
                         if child_id != parent_id:
                             inheritance.append({
                                 'child_id': child_id,
                                 'parent_id': parent_id,
-                                'base_name': base_class
+                                'base_name': base_class,
+                                'resolution_type': 'name_based'
                             })
+                            break
         
         if not inheritance:
             logger.info("No class inheritance to create")
@@ -700,6 +1039,7 @@ class Neo4jCodeImporter:
                 MATCH (parent:Class {id: inh.parent_id})
                 MERGE (child)-[r:INHERITS]->(parent)
                 SET r.base_name = inh.base_name,
+                    r.resolution_type = inh.resolution_type,
                     r.created_at = timestamp()
                 """
                 
@@ -707,7 +1047,12 @@ class Neo4jCodeImporter:
                 self.stats.relationships_created += len(batch)
     
     def _create_class_methods(self, nodes: List[Dict]):
-        """Create BELONGS_TO relationships between methods and classes"""
+        """
+        Create BELONGS_TO relationships between methods and classes with improved detection.
+        
+        Args:
+            nodes (List[Dict]): List of all nodes
+        """
         logger.info("Creating class-method relationships...")
         
         methods = [n for n in nodes if n.get('node_type') == 'function' and n.get('is_method')]
@@ -728,17 +1073,27 @@ class Neo4jCodeImporter:
             method_line = method.get('location', {}).get('line_start', 0)
             
             if method_file in classes_by_file:
-                # Find the class that contains this method
+                # Find the class that contains this method based on line numbers
+                best_match = None
+                smallest_range = float('inf')
+                
                 for cls in classes_by_file[method_file]:
                     cls_start = cls.get('location', {}).get('line_start', 0)
                     cls_end = cls.get('location', {}).get('line_end', 0)
                     
                     if cls_start <= method_line <= cls_end:
-                        method_class_relations.append({
-                            'method_id': method.get('id'),
-                            'class_id': cls.get('id')
-                        })
-                        break
+                        range_size = cls_end - cls_start
+                        if range_size < smallest_range:
+                            smallest_range = range_size
+                            best_match = cls
+                
+                if best_match:
+                    method_class_relations.append({
+                        'method_id': method.get('id'),
+                        'class_id': best_match.get('id'),
+                        'method_name': method.get('name'),
+                        'class_name': best_match.get('name')
+                    })
         
         if not method_class_relations:
             logger.info("No class-method relationships to create")
@@ -755,14 +1110,21 @@ class Neo4jCodeImporter:
                 MATCH (method:Function {id: rel.method_id})
                 MATCH (class:Class {id: rel.class_id})
                 MERGE (method)-[r:BELONGS_TO]->(class)
-                SET r.created_at = timestamp()
+                SET r.method_name = rel.method_name,
+                    r.class_name = rel.class_name,
+                    r.created_at = timestamp()
                 """
                 
                 session.run(query, {'relations': batch})
                 self.stats.relationships_created += len(batch)
     
     def _create_enhanced_relationships(self):
-        """Create enhanced relationships for go-to-definition functionality"""
+        """
+        Create enhanced relationships for go-to-definition functionality.
+        
+        This method creates sophisticated relationships that enable accurate
+        code navigation and definition resolution.
+        """
         logger.info("Creating enhanced relationships for go-to-definition...")
         
         # 1. Create import resolution relationships
@@ -773,8 +1135,66 @@ class Neo4jCodeImporter:
         
         logger.info("Enhanced relationships creation completed")
     
+    def _create_semantic_relationships(self):
+        """
+        Create semantic relationships based on purpose, domain, and technology.
+        
+        This method creates relationships that enable semantic search and
+        discovery of related functionality across the codebase.
+        """
+        logger.info("Creating semantic relationships...")
+        
+        with self.driver.session() as session:
+            # Create SIMILAR_PURPOSE relationships
+            query = """
+            MATCH (f1:Function), (f2:Function)
+            WHERE f1 <> f2 
+              AND f1.purpose IS NOT NULL 
+              AND f2.purpose IS NOT NULL
+              AND f1.purpose = f2.purpose
+              AND f1.purpose <> ''
+            MERGE (f1)-[r:SIMILAR_PURPOSE]->(f2)
+            SET r.purpose = f1.purpose,
+                r.created_at = timestamp()
+            """
+            session.run(query)
+            
+            # Create SAME_DOMAIN relationships
+            query = """
+            MATCH (n1), (n2)
+            WHERE n1 <> n2 
+              AND n1.domain IS NOT NULL 
+              AND n2.domain IS NOT NULL
+              AND n1.domain = n2.domain
+              AND n1.domain <> ''
+              AND (n1:Function OR n1:Class)
+              AND (n2:Function OR n2:Class)
+            MERGE (n1)-[r:SAME_DOMAIN]->(n2)
+            SET r.domain = n1.domain,
+                r.created_at = timestamp()
+            """
+            session.run(query)
+            
+            # Create USES_TECHNOLOGY relationships
+            query = """
+            MATCH (n), (m:Module)
+            WHERE n.technologies IS NOT NULL
+              AND size(n.technologies) > 0
+              AND ANY(tech IN n.technologies WHERE tech = m.name)
+            MERGE (n)-[r:USES_TECHNOLOGY]->(m)
+            SET r.created_at = timestamp()
+            """
+            session.run(query)
+        
+        logger.info("Semantic relationships creation completed")
+    
     def _create_import_resolution(self):
-        """Link imports to their actual definitions"""
+        """
+        Link imports to their actual definitions for accurate go-to-definition.
+        
+        This method creates RESOLVES_TO relationships between import statements
+        and the actual function/class definitions they reference.
+        """
         logger.info("Creating import resolution relationships...")
         
         with self.driver.session() as session:
@@ -850,10 +1270,49 @@ class Neo4jCodeImporter:
             """
             
             session.run(direct_import_query)
-            logger.info("Direct import resolution completed")
+    def _create_qualified_name_relationships(self):
+        """
+        Create relationships based on qualified names for better go-to-definition accuracy.
+        
+        This method creates SAME_MODULE relationships between functions and classes
+        in the same module, which helps with accurate definition resolution.
+        """
+        logger.info("Creating qualified name relationships...")
+        
+        with self.driver.session() as session:
+            # Create SAME_MODULE relationships for functions and classes in the same file
+            query = """
+            MATCH (n1), (n2)
+            WHERE n1 <> n2 
+              AND n1.file_path = n2.file_path
+              AND (n1:Function OR n1:Class)
+              AND (n2:Function OR n2:Class)
+            MERGE (n1)-[r:SAME_MODULE]->(n2)
+            SET r.module_path = n1.file_path,
+                r.created_at = timestamp()
+            """
+            session.run(query)
+            
+            # Create DEFINES relationships from files to their contained functions/classes
+            query = """
+            MATCH (file:File), (entity)
+            WHERE entity.file_path = file.path
+              AND (entity:Function OR entity:Class)
+            MERGE (file)-[r:DEFINES]->(entity)
+            SET r.created_at = timestamp()
+            """
+            session.run(query)
+        
+        logger.info("Qualified name relationships created")
+    
     
     def _create_namespace_aware_calls(self):
-        """Create enhanced function call relationships with proper resolution"""
+        """
+        Create enhanced function call relationships with proper resolution priority.
+        
+        This method creates sophisticated call relationships that respect
+        Python scoping rules and import resolution.
+        """
         logger.info("Creating namespace-aware function calls...")
         
         with self.driver.session() as session:
@@ -932,9 +1391,47 @@ class Neo4jCodeImporter:
                 logger.info(f"Created {calls_created} enhanced function call relationships")
                 self.stats.relationships_created += calls_created
     
+    def _generate_file_github_url(self, repo_url: str, file_path: str, repo_branch: str) -> str:
+        """
+        Generate GitHub URL for a file.
+        
+        Args:
+            repo_url (str): Repository URL
+            file_path (str): Path to the file
+            repo_branch (str): Repository branch name
+            
+        Returns:
+            str: GitHub URL for the file
+        """
+        try:
+            if not repo_url or not repo_url.startswith('http'):
+                return ""
+            
+            # Extract owner/repo from URL
+            if repo_url.endswith('.git'):
+                repo_url = repo_url[:-4]
+            
+            # Handle both https://github.com/owner/repo and git@github.com:owner/repo formats
+            if 'github.com' in repo_url:
+                if repo_url.startswith('git@'):
+                    # Convert git@github.com:owner/repo to https://github.com/owner/repo
+                    repo_url = repo_url.replace('git@github.com:', 'https://github.com/')
+                
+                return f"{repo_url}/blob/{repo_branch}/{file_path}"
+            
+            return ""
+        except Exception as e:
+            logger.debug(f"Error generating file GitHub URL: {e}")
+            return ""
+    
     def create_sample_queries(self):
-        """Create example queries for code intelligence"""
-        logger.info("Creating sample query functions...")
+        """
+        Create example queries for enhanced code intelligence with semantic search.
+        
+        This method generates comprehensive query examples that demonstrate
+        the full capabilities of the code intelligence system.
+        """
+        logger.info("Creating enhanced sample query functions...")
         
         queries = {
             'find_complex_functions': """
@@ -950,6 +1447,18 @@ class Neo4jCodeImporter:
             // Find functions that call a specific function
             MATCH (caller:Function)-[:CALLS_LOCAL|CALLS_IMPORTED|CALLS_METHOD|CALLS_GLOBAL]->(callee:Function {name: $function_name})
             RETURN caller.name, caller.file_path, caller.github_url
+            """,
+            
+            'find_neo4j_insertion_functions': """
+            // Find functions that handle Neo4j graph insertion
+            MATCH (f:Function)
+            WHERE (toLower(f.name) CONTAINS 'insert' OR f.name =~ '.*[Ii]nsert.*')
+              AND (f.file_path CONTAINS 'neo4j' 
+                   OR ANY(call IN f.calls WHERE call CONTAINS 'session') 
+                   OR f.content CONTAINS 'neo4j'
+                   OR f.content CONTAINS 'graph')
+            RETURN f.name, f.qualified_name, f.file_path, f.github_url, f.docstring, f.complexity
+            ORDER BY f.name
             """,
             
             'go_to_function_definition': """
@@ -992,10 +1501,13 @@ class Neo4jCodeImporter:
             
             RETURN 
                 definition.name as function_name,
+                definition.qualified_name as qualified_name,
                 definition.file_path as file_path,
                 definition.line_start as line_number,
                 definition.github_url as github_link,
                 definition.docstring as documentation,
+                definition.purpose as purpose,
+                definition.domain as domain,
                 CASE priority
                     WHEN 1 THEN 'local'
                     WHEN 2 THEN 'imported'  
@@ -1060,18 +1572,44 @@ class Neo4jCodeImporter:
             CALL db.index.vector.queryNodes('code_embeddings', 5, target.embedding)
             YIELD node, score
             WHERE node <> target
-            RETURN node.name, node.file_path, node.github_url, score
+            RETURN node.name, node.file_path, node.github_url, node.purpose, score
+            """,
+            
+            'find_functions_by_domain_and_purpose': """
+            // Find functions by combining domain and purpose criteria
+            MATCH (f:Function)
+            WHERE ($domain IS NULL OR f.domain = $domain)
+              AND ($purpose IS NULL OR f.purpose = $purpose)
+              AND ($technology IS NULL OR $technology IN f.technologies)
+            RETURN f.name, f.qualified_name, f.purpose, f.domain, f.technologies, f.file_path, f.github_url
+            ORDER BY f.domain, f.purpose, f.name
+            """,
+            
+            'semantic_code_search': """
+            // Semantic search for functions based on multiple criteria
+            MATCH (f:Function)
+            WHERE (f.purpose CONTAINS $search_term 
+                   OR f.domain CONTAINS $search_term 
+                   OR f.name CONTAINS $search_term
+                   OR ANY(tech IN f.technologies WHERE tech CONTAINS $search_term)
+                   OR f.docstring CONTAINS $search_term)
+            RETURN f.name, f.qualified_name, f.purpose, f.domain, f.technologies, 
+                   f.file_path, f.github_url, f.docstring
+            ORDER BY f.name
+            LIMIT 20
             """,
             
             'code_metrics': """
-            // Get repository code metrics
+            // Get repository code metrics with semantic breakdown
             MATCH (f:Function)
             WITH count(f) as total_functions,
                  avg(f.complexity) as avg_complexity,
-                 max(f.complexity) as max_complexity
+                 max(f.complexity) as max_complexity,
+                 collect(DISTINCT f.purpose) as purposes,
+                 collect(DISTINCT f.domain) as domains
             
             MATCH (c:Class)
-            WITH total_functions, avg_complexity, max_complexity, count(c) as total_classes
+            WITH total_functions, avg_complexity, max_complexity, purposes, domains, count(c) as total_classes
             
             MATCH (file:File)
             RETURN {
@@ -1079,22 +1617,34 @@ class Neo4jCodeImporter:
                 total_classes: total_classes,
                 total_files: count(file),
                 avg_complexity: round(avg_complexity, 2),
-                max_complexity: max_complexity
+                max_complexity: max_complexity,
+                purposes: purposes,
+                domains: domains
             } as metrics
             """
         }
         
         # Save queries to file for reference
-        queries_file = "sample_queries.cypher"
+        queries_file = "enhanced_sample_queries.cypher"
         with open(queries_file, 'w') as f:
             for name, query in queries.items():
                 f.write(f"// {name.replace('_', ' ').title()}\n")
                 f.write(query.strip() + "\n\n")
         
-        logger.info(f"Sample queries saved to: {queries_file}")
+        logger.info(f"Enhanced sample queries saved to: {queries_file}")
     
     def go_to_definition(self, function_name: str, caller_file: str, caller_function: str = None):
-        """Go-to-definition query helper"""
+        """
+        Enhanced go-to-definition query helper with accurate resolution.
+        
+        Args:
+            function_name (str): Name of the function to find
+            caller_file (str): File where the function is called from
+            caller_function (str): Optional name of the calling function
+            
+        Returns:
+            Optional[Dict]: Function definition information or None if not found
+        """
         with self.driver.session() as session:
             result = session.run("""
             MATCH (caller_file:File {path: $caller_file_path})
@@ -1135,10 +1685,14 @@ class Neo4jCodeImporter:
             
             RETURN 
                 definition.name as function_name,
+                definition.qualified_name as qualified_name,
                 definition.file_path as file_path,
                 definition.line_start as line_number,
                 definition.github_url as github_link,
                 definition.docstring as documentation,
+                definition.purpose as purpose,
+                definition.domain as domain,
+                definition.technologies as technologies,
                 CASE priority
                     WHEN 1 THEN 'local'
                     WHEN 2 THEN 'imported'  
@@ -1156,16 +1710,29 @@ class Neo4jCodeImporter:
             if record:
                 return {
                     'name': record['function_name'],
+                    'qualified_name': record['qualified_name'],
                     'file': record['file_path'],
                     'line': record['line_number'],
                     'github_url': record['github_link'],
                     'docs': record['documentation'],
+                    'purpose': record['purpose'],
+                    'domain': record['domain'],
+                    'technologies': record['technologies'],
                     'type': record['resolution_type']
                 }
             return None
     
     def run_sample_query(self, query_name: str, **params):
-        """Run a sample query with parameters"""
+        """
+        Run a sample query with parameters.
+        
+        Args:
+            query_name (str): Name of the query to run
+            **params: Parameters for the query
+            
+        Returns:
+            List[Dict]: Query results
+        """
         queries = {
             'find_complex_functions': """
             MATCH (f:Function)
@@ -1179,10 +1746,12 @@ class Neo4jCodeImporter:
             MATCH (f:Function)
             WITH count(f) as total_functions,
                  avg(f.complexity) as avg_complexity,
-                 max(f.complexity) as max_complexity
+                 max(f.complexity) as max_complexity,
+                 collect(DISTINCT f.purpose) as purposes,
+                 collect(DISTINCT f.domain) as domains
             
             MATCH (c:Class)
-            WITH total_functions, avg_complexity, max_complexity, count(c) as total_classes
+            WITH total_functions, avg_complexity, max_complexity, purposes, domains, count(c) as total_classes
             
             MATCH (file:File)
             RETURN {
@@ -1190,7 +1759,9 @@ class Neo4jCodeImporter:
                 total_classes: total_classes,
                 total_files: count(file),
                 avg_complexity: round(avg_complexity, 2),
-                max_complexity: max_complexity
+                max_complexity: max_complexity,
+                purposes: purposes,
+                domains: domains
             } as metrics
             """,
             
@@ -1213,7 +1784,7 @@ class Neo4jCodeImporter:
             return [record.data() for record in result]
     
     def _print_import_summary(self):
-        """Print comprehensive import summary"""
+        """Print comprehensive import summary with enhanced statistics."""
         duration = self.stats.end_time - self.stats.start_time
         
         print("\n" + "="*60)
@@ -1237,32 +1808,41 @@ class Neo4jCodeImporter:
                 print("\nRepository Metrics:")
                 print("-" * 30)
                 for key, value in metrics[0]['metrics'].items():
-                    print(f"{key.replace('_', ' ').title()}: {value:,}")
+                    if isinstance(value, list):
+                        print(f"{key.replace('_', ' ').title()}: {len(value)} unique values")
+                    else:
+                        print(f"{key.replace('_', ' ').title()}: {value:,}")
+                        
         except Exception as e:
             logger.debug(f"Could not fetch metrics: {e}")
 
 
 def main():
-    """Main entry point"""
+    """
+    Main entry point with enhanced command-line interface.
+    
+    Returns:
+        int: Exit code (0 for success, 1 for failure)
+    """
     parser = argparse.ArgumentParser(
-        description="Import AST analysis results into Neo4j AuraDB with code intelligence",
+        description="Import AST analysis results into Neo4j AuraDB with enhanced code intelligence",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   # Import analysis with default settings
-  python neo4j_importer.py --input analysis.json
+  python knowledge_graph_generator.py --input analysis.json
   
   # Import with custom Neo4j config
-  python neo4j_importer.py --input analysis.json --uri "neo4j+s://xxx.databases.neo4j.io"
+  python knowledge_graph_generator.py --input analysis.json --uri "neo4j+s://xxx.databases.neo4j.io"
   
   # Clear database before import
-  python neo4j_importer.py --input analysis.json --clear-db
+  python knowledge_graph_generator.py --input analysis.json --clear-db
   
   # Use OpenAI embeddings (requires OPENAI_API_KEY)
-  python neo4j_importer.py --input analysis.json --embeddings openai
+  python knowledge_graph_generator.py --input analysis.json --embeddings openai
   
   # Run with verbose logging
-  python neo4j_importer.py --input analysis.json --verbose
+  python knowledge_graph_generator.py --input analysis.json --verbose
         """
     )
     
@@ -1372,11 +1952,14 @@ Examples:
             importer.create_sample_queries()
             
             print("\nImport completed successfully!")
-            print("You can now run queries against your code intelligence graph.")
-            print("Enhanced go-to-definition and find-all-references are available!")
+            print("Enhanced code intelligence features available:")
+            print("- Accurate go-to-definition with context awareness")
+            print("- Enhanced find-all-references")
+            print("- Better GitHub URL generation with line/column info")
+            print("- Improved function discovery by name patterns")
             
             if EMBEDDINGS_AVAILABLE:
-                print("Vector similarity search is available for finding similar code.")
+                print("- Vector similarity search for finding similar code")
             
             # Test enhanced relationships
             try:
@@ -1386,6 +1969,20 @@ Examples:
                     for stat in enhanced_stats:
                         rel_type = stat['relationship_type'].replace('CALLS_', '').lower()
                         print(f"  {rel_type} calls: {stat['count']:,}")
+                        
+                # Test Neo4j function discovery  
+                print("\nTesting Neo4j function discovery...")
+                with importer.driver.session() as session:
+                    result = session.run("""
+                    MATCH (f:Function)
+                    WHERE toLower(f.name) CONTAINS 'insert' 
+                      AND (f.file_path CONTAINS 'neo4j' OR f.content CONTAINS 'neo4j')
+                    RETURN count(f) as neo4j_functions
+                    """)
+                    count = result.single()
+                    if count and count['neo4j_functions'] > 0:
+                        print(f"  Found {count['neo4j_functions']} potential Neo4j insertion functions")
+                        
             except Exception as e:
                 logger.debug(f"Could not fetch enhanced stats: {e}")
             
