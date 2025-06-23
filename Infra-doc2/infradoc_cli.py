@@ -144,6 +144,7 @@ def cmd_analyze(args):
         print("WARNING: No LLM providers available, running basic analysis only")
         analysis_config.enable_ai = False
     
+    analyzer = None
     try:
         # Initialize analyzer
         analyzer = InfrastructureAnalyzer(
@@ -190,6 +191,13 @@ def cmd_analyze(args):
             import traceback
             traceback.print_exc()
         return 1
+    finally:
+        # Ensure cleanup
+        if analyzer:
+            try:
+                analyzer._cleanup_resources()
+            except Exception as cleanup_error:
+                logger.warning(f"Cleanup error: {cleanup_error}")
 
 def cmd_quick(args):
     """Execute quick analysis command."""
@@ -438,17 +446,22 @@ def main():
     if not args.command:
         print_banner()
         parser.print_help()
-        return 0
+        sys.exit(0)
     
     # Execute command
     try:
-        return args.func(args)
+        exit_code = args.func(args)
+        print(f"\nInfraDoc analysis completed.")
+        sys.exit(exit_code)
+    except KeyboardInterrupt:
+        print("\nOperation interrupted by user")
+        sys.exit(1)
     except Exception as e:
         logger.error(f"Command failed: {e}")
         if args.debug:
             import traceback
             traceback.print_exc()
-        return 1
+        sys.exit(1)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

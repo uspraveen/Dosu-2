@@ -5,7 +5,7 @@
 This guide provides step-by-step instructions to recreate the analyzed infrastructure environment. Use this for development, testing, or disaster recovery scenarios.
 
 **Target System**: ec2-3-143-6-83.us-east-2.compute.amazonaws.com  
-**Architecture**: Standard deployment  
+**Architecture**: Microservices  
 **Analysis Date**: 2025-06-23  
 
 ## Prerequisites
@@ -19,7 +19,8 @@ This guide provides step-by-step instructions to recreate the analyzed infrastru
 
 Based on our analysis, install the following technologies:
 
-- Basic Linux utilities
+- Python 3.x runtime and virtual environment
+- Nginx web server
 
 ## Step-by-Step Recreation
 
@@ -36,6 +37,13 @@ sudo apt install -y build-essential curl wget git vim
 ### 2. Technology Installation
 
 ```bash
+# Install Python and virtual environment
+sudo apt install -y python3 python3-pip python3-venv
+
+# Install Nginx
+sudo apt install -y nginx
+sudo systemctl enable nginx
+
 ```
 
 ### 3. Application Setup
@@ -50,6 +58,8 @@ sudo mkdir -p \opt\learnchain
 Based on the discovered application files, create the following structure:
 
 - `/opt/learnchain/create_course_knowledge_graph_neo.py` (Python)
+- `/opt/learnchain/worker.py` (Python)
+- `/opt/learnchain/parsing_adapter.py` (Python)
 - `/opt/learnchain/worker-2.py` (Python)
 
 ### 4. Service Configuration
@@ -59,64 +69,40 @@ Based on the discovered application files, create the following structure:
 The following services were identified and should be configured:
 
 
-**[kworker/R-rcu_g]** (unknown)
-- Purpose: Basic process discovery
-- User: root
-- Command: `[kworker/R-rcu_g]`
+**nginx:** (background_worker)
+- Purpose: Background task processing
+- User: www-data
+- Command: `nginx: worker process`
 
 
-**[kworker/R-rcu_p]** (unknown)
-- Purpose: Basic process discovery
-- User: root
-- Command: `[kworker/R-rcu_p]`
+**/opt/learnchain/venv/bin/python** (background_worker)
+- Purpose: Background task processing
+- User: ubuntu
+- Command: `/opt/learnchain/venv/bin/python /opt/learnchain/worker.py`
 
 
-**[kworker/R-slub_]** (unknown)
-- Purpose: Basic process discovery
-- User: root
-- Command: `[kworker/R-slub_]`
-
-
-**[kworker/R-netns]** (unknown)
-- Purpose: Basic process discovery
-- User: root
-- Command: `[kworker/R-netns]`
-
-
-**[kworker/0:0H-events_highpri]** (unknown)
-- Purpose: Basic process discovery
-- User: root
-- Command: `[kworker/0:0H-events_highpri]`
-
-
-**[kworker/R-mm_pe]** (unknown)
-- Purpose: Basic process discovery
-- User: root
-- Command: `[kworker/R-mm_pe]`
-
-
-**[kworker/R-inet_]** (unknown)
-- Purpose: Basic process discovery
-- User: root
-- Command: `[kworker/R-inet_]`
+**/opt/learnchain/venv/bin/python** (background_worker)
+- Purpose: Background task processing
+- User: ubuntu
+- Command: `/opt/learnchain/venv/bin/python /opt/learnchain/worker-2.py`
 
 
 #### Systemd Service Configuration
 
 
-Create systemd service file for [kworker/R-rcu_g]:
+Create systemd service file for nginx::
 
 ```bash
-sudo tee /etc/systemd/system/[kworkerR-rcu_g].service > /dev/null <<EOF
+sudo tee /etc/systemd/system/nginx:.service > /dev/null <<EOF
 [Unit]
-Description=Basic process discovery
+Description=Background task processing
 After=network.target
 
 [Service]
 Type=simple
-User=root
+User=www-data
 WorkingDirectory=None
-ExecStart=[kworker/R-rcu_g]
+ExecStart=nginx: worker process
 Restart=always
 RestartSec=10
 
@@ -126,24 +112,24 @@ EOF
 
 # Enable and start the service
 sudo systemctl daemon-reload
-sudo systemctl enable [kworkerR-rcu_g].service
-sudo systemctl start [kworkerR-rcu_g].service
+sudo systemctl enable nginx:.service
+sudo systemctl start nginx:.service
 ```
 
 
-Create systemd service file for [kworker/R-rcu_p]:
+Create systemd service file for /opt/learnchain/venv/bin/python:
 
 ```bash
-sudo tee /etc/systemd/system/[kworkerR-rcu_p].service > /dev/null <<EOF
+sudo tee /etc/systemd/system/optlearnchainvenvbinpython.service > /dev/null <<EOF
 [Unit]
-Description=Basic process discovery
+Description=Background task processing
 After=network.target
 
 [Service]
 Type=simple
-User=root
-WorkingDirectory=None
-ExecStart=[kworker/R-rcu_p]
+User=ubuntu
+WorkingDirectory=/opt/learnchain
+ExecStart=/opt/learnchain/venv/bin/python /opt/learnchain/worker.py
 Restart=always
 RestartSec=10
 
@@ -153,24 +139,24 @@ EOF
 
 # Enable and start the service
 sudo systemctl daemon-reload
-sudo systemctl enable [kworkerR-rcu_p].service
-sudo systemctl start [kworkerR-rcu_p].service
+sudo systemctl enable optlearnchainvenvbinpython.service
+sudo systemctl start optlearnchainvenvbinpython.service
 ```
 
 
-Create systemd service file for [kworker/R-slub_]:
+Create systemd service file for /opt/learnchain/venv/bin/python:
 
 ```bash
-sudo tee /etc/systemd/system/[kworkerR-slub_].service > /dev/null <<EOF
+sudo tee /etc/systemd/system/optlearnchainvenvbinpython.service > /dev/null <<EOF
 [Unit]
-Description=Basic process discovery
+Description=Background task processing
 After=network.target
 
 [Service]
 Type=simple
-User=root
-WorkingDirectory=None
-ExecStart=[kworker/R-slub_]
+User=ubuntu
+WorkingDirectory=/opt/learnchain
+ExecStart=/opt/learnchain/venv/bin/python /opt/learnchain/worker-2.py
 Restart=always
 RestartSec=10
 
@@ -180,116 +166,8 @@ EOF
 
 # Enable and start the service
 sudo systemctl daemon-reload
-sudo systemctl enable [kworkerR-slub_].service
-sudo systemctl start [kworkerR-slub_].service
-```
-
-
-Create systemd service file for [kworker/R-netns]:
-
-```bash
-sudo tee /etc/systemd/system/[kworkerR-netns].service > /dev/null <<EOF
-[Unit]
-Description=Basic process discovery
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=None
-ExecStart=[kworker/R-netns]
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable and start the service
-sudo systemctl daemon-reload
-sudo systemctl enable [kworkerR-netns].service
-sudo systemctl start [kworkerR-netns].service
-```
-
-
-Create systemd service file for [kworker/0:0H-events_highpri]:
-
-```bash
-sudo tee /etc/systemd/system/[kworker0:0H-events_highpri].service > /dev/null <<EOF
-[Unit]
-Description=Basic process discovery
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=None
-ExecStart=[kworker/0:0H-events_highpri]
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable and start the service
-sudo systemctl daemon-reload
-sudo systemctl enable [kworker0:0H-events_highpri].service
-sudo systemctl start [kworker0:0H-events_highpri].service
-```
-
-
-Create systemd service file for [kworker/R-mm_pe]:
-
-```bash
-sudo tee /etc/systemd/system/[kworkerR-mm_pe].service > /dev/null <<EOF
-[Unit]
-Description=Basic process discovery
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=None
-ExecStart=[kworker/R-mm_pe]
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable and start the service
-sudo systemctl daemon-reload
-sudo systemctl enable [kworkerR-mm_pe].service
-sudo systemctl start [kworkerR-mm_pe].service
-```
-
-
-Create systemd service file for [kworker/R-inet_]:
-
-```bash
-sudo tee /etc/systemd/system/[kworkerR-inet_].service > /dev/null <<EOF
-[Unit]
-Description=Basic process discovery
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=None
-ExecStart=[kworker/R-inet_]
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable and start the service
-sudo systemctl daemon-reload
-sudo systemctl enable [kworkerR-inet_].service
-sudo systemctl start [kworkerR-inet_].service
+sudo systemctl enable optlearnchainvenvbinpython.service
+sudo systemctl start optlearnchainvenvbinpython.service
 ```
 
 
@@ -315,11 +193,18 @@ Create necessary configuration files based on discovered patterns:
 # Configure UFW firewall
 sudo ufw enable
 sudo ufw allow ssh
-# No additional ports detected
+sudo ufw allow 80
+sudo ufw allow 443
 ```
 
 #### SSL/TLS Setup (if web services detected)
-No web services detected requiring SSL configuration.
+```bash
+# Install Certbot for Let's Encrypt
+sudo apt install -y certbot python3-certbot-nginx
+
+# Obtain SSL certificate (replace with your domain)
+sudo certbot --nginx -d your-domain.com
+```
 
 ### 7. Monitoring and Logging
 
@@ -346,6 +231,19 @@ EOF
 #### Service Health Checks
 ```bash
 # Check service status
+sudo systemctl status @dbus-daemon
+sudo systemctl status usrsbinchronyd
+sudo systemctl status usrsbinchronyd
+sudo systemctl status usrlibpolkit-1polkitd
+sudo systemctl status nginx
+sudo systemctl status usrsbinrsyslogd
+sudo systemctl status (sd-pam)
+sudo systemctl status sshd:
+sudo systemctl status -bash
+sudo systemctl status sshd:
+sudo systemctl status sshd:
+sudo systemctl status sshd:
+sudo systemctl status ps
 
 # Check application processes
 ps aux | grep python
@@ -357,6 +255,9 @@ sudo netstat -tlnp
 
 #### Application Testing
 ```bash
+# Test web services
+curl -I http://localhost
+
 # Check application logs
 tail -f /var/log/app/application.log
 
@@ -402,4 +303,4 @@ htop
 ---
 
 *Developer guide generated by InfraDoc 2.0*  
-*Last updated: 2025-06-23 14:49:01*
+*Last updated: 2025-06-23 17:19:57*

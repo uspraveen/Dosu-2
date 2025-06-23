@@ -325,7 +325,7 @@ class LLMProvider:
             raise
     
     def call(self, prompt: str, system_prompt: str = None, 
-             max_tokens: int = 3000, temperature: float = 0.1) -> Dict:
+             max_tokens: int = 5000, temperature: float = 0.1) -> Dict:
         """
         Make LLM call with enhanced JSON handling.
         
@@ -670,31 +670,59 @@ class SmartDiscovery:
         """
         logger.info(f"[DISCOVERY] Starting intelligent discovery of {host}")
         
-        # Stage 1: Initial Discovery
-        initial_context = self._stage1_initial_discovery(host)
+        try:
+            # Stage 1: Initial Discovery
+            initial_context = self._stage1_initial_discovery(host)
+            
+            # Stage 2: Process Analysis
+            process_context = self._stage2_process_analysis(host, initial_context)
+            
+            # Stage 3: File Discovery
+            file_context = self._stage3_file_discovery(host, process_context)
+            
+            # Stage 4: Code Analysis
+            code_context = self._stage4_code_analysis(host, file_context)
+            
+            # Stage 5: Architecture Synthesis
+            architecture_insights = self._stage5_architecture_synthesis(host, code_context)
+            
+            # Stage 6: Security Analysis
+            security_analysis = self._stage6_security_analysis(host, architecture_insights)
+            
+            return {
+                'processes': self.discovered_data.get('processes', []),
+                'files': self.discovered_data.get('files', []),
+                'infrastructure_insights': asdict(architecture_insights),
+                'security_analysis': security_analysis,
+                'llm_analysis_summary': self.llm.get_analysis_summary()
+            }
         
-        # Stage 2: Process Analysis
-        process_context = self._stage2_process_analysis(host, initial_context)
-        
-        # Stage 3: File Discovery
-        file_context = self._stage3_file_discovery(host, process_context)
-        
-        # Stage 4: Code Analysis
-        code_context = self._stage4_code_analysis(host, file_context)
-        
-        # Stage 5: Architecture Synthesis
-        architecture_insights = self._stage5_architecture_synthesis(host, code_context)
-        
-        # Stage 6: Security Analysis
-        security_analysis = self._stage6_security_analysis(host, architecture_insights)
-        
-        return {
-            'processes': self.discovered_data.get('processes', []),
-            'files': self.discovered_data.get('files', []),
-            'infrastructure_insights': asdict(architecture_insights),
-            'security_analysis': security_analysis,
-            'llm_analysis_summary': self.llm.get_analysis_summary()
-        }
+        except Exception as e:
+            logger.error(f"[DISCOVERY] Discovery failed: {e}")
+            # Return basic fallback data
+            return {
+                'processes': self.discovered_data.get('processes', []),
+                'files': self.discovered_data.get('files', []),
+                'infrastructure_insights': {
+                    'architecture_pattern': 'Unknown',
+                    'technology_stack': [],
+                    'deployment_model': 'Unknown',
+                    'scalability_assessment': 'Unknown',
+                    'security_posture': 'Needs assessment',
+                    'operational_complexity': 'Unknown',
+                    'recommendations': ['Review infrastructure analysis']
+                },
+                'security_analysis': {'analysis': 'Discovery incomplete due to error'},
+                'llm_analysis_summary': self.llm.get_analysis_summary()
+            }
+    
+    def cleanup(self):
+        """Clean up resources."""
+        try:
+            if hasattr(self, 'connector') and self.connector:
+                self.connector.close_all_connections()
+        except Exception as e:
+            logger.warning(f"[DISCOVERY] Cleanup warning: {e}")
     
     def _stage1_initial_discovery(self, host: str) -> Dict:
         """Stage 1: Initial system discovery."""
@@ -1155,6 +1183,63 @@ Provide actionable security assessment.
             logger.debug(f"Failed to analyze file {file_path}: {e}")
             return None
     
+    def _analyze_configuration_file(self, host: str, file_path: str) -> Optional[Dict]:
+        """Analyze configuration file."""
+        try:
+            # Get file content
+            stdout, stderr, exit_code, execution = self.connector.execute_command(
+                host, f'head -n 20 "{file_path}" 2>/dev/null', f'config_analysis'
+            )
+            
+            if exit_code != 0 or not stdout.strip():
+                return None
+            
+            # Basic configuration analysis
+            config_info = {
+                'path': file_path,
+                'type': self._detect_config_type(file_path),
+                'content_preview': stdout[:500],  # First 500 chars
+                'key_settings': self._extract_key_settings(stdout, file_path)
+            }
+            
+            return config_info
+            
+        except Exception as e:
+            logger.debug(f"Failed to analyze config file {file_path}: {e}")
+            return None
+    
+    def _detect_config_type(self, file_path: str) -> str:
+        """Detect configuration file type."""
+        if '/systemd/system' in file_path:
+            return 'systemd_service'
+        elif '/nginx/' in file_path:
+            return 'nginx_config'
+        elif file_path.endswith('.yml') or file_path.endswith('.yaml'):
+            return 'yaml_config'
+        elif file_path.endswith('.json'):
+            return 'json_config'
+        elif file_path.endswith('.conf'):
+            return 'generic_config'
+        return 'unknown_config'
+    
+    def _extract_key_settings(self, content: str, file_path: str) -> List[str]:
+        """Extract key configuration settings."""
+        key_settings = []
+        
+        if '/systemd/system' in file_path:
+            # Extract systemd service settings
+            for line in content.split('\n'):
+                if any(setting in line for setting in ['ExecStart=', 'User=', 'WorkingDirectory=']):
+                    key_settings.append(line.strip())
+        
+        elif '/nginx/' in file_path:
+            # Extract nginx settings
+            for line in content.split('\n'):
+                if any(setting in line for setting in ['server_name', 'listen', 'root', 'proxy_pass']):
+                    key_settings.append(line.strip())
+        
+        return key_settings[:5]  # Limit to top 5 settings
+    
     def _detect_language(self, file_path: str) -> str:
         """Detect programming language."""
         extension = Path(file_path).suffix.lower()
@@ -1228,6 +1313,32 @@ Provide actionable security assessment.
         if 'aws' in command or 'boto' in command:
             integrations.extend(['AWS SQS', 'AWS S3'])
         return integrations
+    
+    def _extract_security_concerns(self, proc_data: Dict, llm_insights: Dict) -> List[str]:
+        """Extract security concerns from process data and LLM insights."""
+        security_concerns = []
+        
+        command = proc_data.get('command', '').lower()
+        user = proc_data.get('user', '')
+        
+        # Check for root processes (security concern)
+        if user == 'root':
+            security_concerns.append('Running as root - consider principle of least privilege')
+        
+        # Check for common security-sensitive processes
+        if 'python' in command and 'worker' in command:
+            security_concerns.append('Review worker process security and input validation')
+        
+        if 'nginx' in command:
+            security_concerns.append('Review web server configuration and SSL/TLS settings')
+        
+        # Extract insights from LLM analysis if available
+        if isinstance(llm_insights, dict):
+            llm_security = llm_insights.get('security_concerns', [])
+            if isinstance(llm_security, list):
+                security_concerns.extend(llm_security)
+        
+        return security_concerns[:5]  # Limit to top 5 concerns
     
     def _filter_application_files(self, file_list: List[str]) -> List[str]:
         """Filter out virtual environment and library files to focus on application code."""

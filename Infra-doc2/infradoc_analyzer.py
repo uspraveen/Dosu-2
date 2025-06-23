@@ -165,9 +165,6 @@ class InfrastructureAnalyzer:
             if analysis_config.include_documentation:
                 documentation_generated = self._generate_documentation(scan_report, output_dir)
             
-            # Close connections
-            self.ssh_connector.close_all_connections()
-            
             # Create final result
             result = AnalysisResult(
                 scan_report=scan_report,
@@ -184,8 +181,6 @@ class InfrastructureAnalyzer:
             
         except Exception as e:
             logger.error(f"❌ Analysis failed: {e}")
-            self.ssh_connector.close_all_connections()
-            
             return AnalysisResult(
                 scan_report=None,
                 artifacts_generated=[],
@@ -194,6 +189,27 @@ class InfrastructureAnalyzer:
                 success=False,
                 error_message=str(e)
             )
+        finally:
+            # Ensure cleanup always happens
+            try:
+                self._cleanup_resources()
+            except Exception as cleanup_error:
+                logger.warning(f"Cleanup warning: {cleanup_error}")
+    
+    def _cleanup_resources(self):
+        """Clean up all resources."""
+        try:
+            # Close SSH connections
+            if hasattr(self, 'ssh_connector') and self.ssh_connector:
+                self.ssh_connector.close_all_connections()
+            
+            # Clean up smart discovery
+            if hasattr(self, 'smart_discovery') and self.smart_discovery:
+                self.smart_discovery.cleanup()
+                
+            logger.info("[ANALYZER] Resources cleaned up successfully")
+        except Exception as e:
+            logger.warning(f"[ANALYZER] Error during cleanup: {e}")
     
     def _establish_connection(self, config: ConnectionConfig) -> bool:
         """Establish SSH connection to target host."""
@@ -614,7 +630,11 @@ def quick_analysis(host: str, username: str = "ubuntu", key_file: str = None,
     
     # Initialize and run analyzer
     analyzer = InfrastructureAnalyzer(llm_providers)
-    return analyzer.analyze_infrastructure(connection_config, analysis_config)
+    try:
+        return analyzer.analyze_infrastructure(connection_config, analysis_config)
+    finally:
+        # Ensure cleanup
+        analyzer._cleanup_resources()
 
 def deep_analysis(host: str, username: str = "ubuntu", key_file: str = None, 
                  password: str = None) -> AnalysisResult:
@@ -649,13 +669,18 @@ def deep_analysis(host: str, username: str = "ubuntu", key_file: str = None,
     
     # Determine LLM providers
     llm_providers = []
-    if os.getenv("OPENAI_API_KEY"):
-        llm_providers.append({"provider": "openai", "model": "gpt-4o"})
-    if os.getenv("ANTHROPIC_API_KEY"):
-        llm_providers.append({"provider": "claude", "model": "claude-3-5-sonnet-20241022"})
     if os.getenv("GROK_API_KEY"):
         llm_providers.append({"provider": "grok", "model": "grok-3"})
+    if os.getenv("OPENAI_API_KEY"):
+        llm_providers.append({"provider": "openai", "model": "gpt-4o-mini"})
+    if os.getenv("ANTHROPIC_API_KEY"):
+        llm_providers.append({"provider": "claude", "model": "claude-3-5-sonnet-20241022"})
+    
     
     # Initialize and run analyzer
     analyzer = InfrastructureAnalyzer(llm_providers)
-    return analyzer.analyze_infrastructure(connection_config, analysis_config)
+    try:
+        return analyzer.analyze_infrastructure(connection_config, analysis_config)
+    finally:
+        # Ensure cleanup
+        analyzer._cleanup_resources()

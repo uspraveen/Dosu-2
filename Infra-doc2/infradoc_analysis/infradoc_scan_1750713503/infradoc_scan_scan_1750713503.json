@@ -1,0 +1,481 @@
+{
+  "host": "ec2-3-143-6-83.us-east-2.compute.amazonaws.com",
+  "scan_id": "scan_1750713503",
+  "timestamp": "2025-06-23T17:18:23.954889",
+  "scan_duration": 93.58351540565491,
+  "processes": [
+    {
+      "pid": 513,
+      "name": "@dbus-daemon",
+      "user": "message+",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "@dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 520,
+      "name": "/usr/bin/python3",
+      "user": "root",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "/usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "application",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": [
+        "Running as root - consider principle of least privilege"
+      ]
+    },
+    {
+      "pid": 623,
+      "name": "/usr/sbin/chronyd",
+      "user": "_chrony",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "/usr/sbin/chronyd -F 1",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 633,
+      "name": "/usr/sbin/chronyd",
+      "user": "_chrony",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "/usr/sbin/chronyd -F 1",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 700,
+      "name": "/usr/bin/python3",
+      "user": "root",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "/usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "application",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": [
+        "Running as root - consider principle of least privilege"
+      ]
+    },
+    {
+      "pid": 199687,
+      "name": "/usr/lib/polkit-1/polkitd",
+      "user": "polkitd",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "/usr/lib/polkit-1/polkitd --no-debug",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 199688,
+      "name": "nginx:",
+      "user": "root",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "web_server",
+      "service_purpose": "Web server and reverse proxy",
+      "integrations_detected": [],
+      "security_concerns": [
+        "Running as root - consider principle of least privilege",
+        "Review web server configuration and SSL/TLS settings"
+      ]
+    },
+    {
+      "pid": 199689,
+      "name": "nginx:",
+      "user": "www-data",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "nginx: worker process",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "background_worker",
+      "service_purpose": "Background task processing",
+      "integrations_detected": [],
+      "security_concerns": [
+        "Review web server configuration and SSL/TLS settings"
+      ]
+    },
+    {
+      "pid": 199710,
+      "name": "/usr/sbin/rsyslogd",
+      "user": "syslog",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "/usr/sbin/rsyslogd -n -iNONE",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 241400,
+      "name": "/opt/learnchain/venv/bin/python",
+      "user": "ubuntu",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "/opt/learnchain/venv/bin/python /opt/learnchain/worker.py",
+      "full_command_line": null,
+      "working_dir": "/opt/learnchain",
+      "service_classification": "background_worker",
+      "service_purpose": "Background task processing",
+      "integrations_detected": [],
+      "security_concerns": [
+        "Review worker process security and input validation"
+      ]
+    },
+    {
+      "pid": 241401,
+      "name": "/opt/learnchain/venv/bin/python",
+      "user": "ubuntu",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "/opt/learnchain/venv/bin/python /opt/learnchain/worker-2.py",
+      "full_command_line": null,
+      "working_dir": "/opt/learnchain",
+      "service_classification": "background_worker",
+      "service_purpose": "Background task processing",
+      "integrations_detected": [],
+      "security_concerns": [
+        "Review worker process security and input validation"
+      ]
+    },
+    {
+      "pid": 272770,
+      "name": "(sd-pam)",
+      "user": "ubuntu",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "(sd-pam)",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 272878,
+      "name": "sshd:",
+      "user": "ubuntu",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "sshd: ubuntu@pts/0",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 272879,
+      "name": "-bash",
+      "user": "ubuntu",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "-bash",
+      "full_command_line": null,
+      "working_dir": "/home/ubuntu",
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 272949,
+      "name": "sshd:",
+      "user": "ubuntu",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "sshd: ubuntu@notty",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 273114,
+      "name": "sshd:",
+      "user": "ubuntu",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "sshd: ubuntu@notty",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 273540,
+      "name": "sshd:",
+      "user": "ubuntu",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "sshd: ubuntu@notty",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    },
+    {
+      "pid": 273541,
+      "name": "ps",
+      "user": "ubuntu",
+      "cpu_percent": "0",
+      "memory_percent": "0",
+      "command": "ps aux --no-headers",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "service",
+      "service_purpose": "Application service",
+      "integrations_detected": [],
+      "security_concerns": []
+    }
+  ],
+  "application_files": [
+    {
+      "path": "/opt/learnchain/create_course_knowledge_graph_neo.py",
+      "language": "Python",
+      "size": 48421,
+      "last_modified": "2025-05-20T16:33:49",
+      "imports": [
+        "json",
+        "logging",
+        "time",
+        "langchain_experimental.graph_transformers",
+        "langchain_core.documents",
+        "os",
+        "boto3",
+        "Document",
+        "LLMGraphTransformer",
+        "langchain_openai"
+      ],
+      "functions": [],
+      "classes": [],
+      "external_services": []
+    },
+    {
+      "path": "/opt/learnchain/worker.py",
+      "language": "Python",
+      "size": 4552,
+      "last_modified": "2025-05-04T16:08:20",
+      "imports": [
+        "json",
+        "unquote_plus",
+        "annotations",
+        "urllib.parse",
+        "__future__",
+        "boto3"
+      ],
+      "functions": [
+        "_delete_msg",
+        "handle"
+      ],
+      "classes": [],
+      "external_services": [
+        ".amazonaws.com",
+        "s3",
+        "sqs"
+      ]
+    },
+    {
+      "path": "/opt/learnchain/parsing_adapter.py",
+      "language": "Python",
+      "size": 12643,
+      "last_modified": "2025-05-13T16:12:27",
+      "imports": [
+        "qdrant_client",
+        "llama_cloud_services",
+        "os",
+        "tiktoken",
+        "Dict",
+        "__future__",
+        "llama_index.core.node_parser",
+        "load_dotenv",
+        "dotenv",
+        "Path"
+      ],
+      "functions": [],
+      "classes": [],
+      "external_services": []
+    },
+    {
+      "path": "/opt/learnchain/worker-2.py",
+      "language": "Python",
+      "size": 6342,
+      "last_modified": "2025-05-23T04:30:08",
+      "imports": [
+        "json",
+        "unquote_plus",
+        "annotations",
+        "urllib.parse",
+        "__future__",
+        "requests",
+        "threading",
+        "boto3"
+      ],
+      "functions": [
+        "trigger_course_generation_async",
+        "_trigger"
+      ],
+      "classes": [],
+      "external_services": [
+        ".amazonaws.com",
+        "s3",
+        "sqs"
+      ]
+    }
+  ],
+  "infrastructure_insights": {
+    "architecture_pattern": "Microservices",
+    "technology_stack": [],
+    "deployment_model": "Cloud-based",
+    "scalability_assessment": "Moderate",
+    "security_posture": "Needs Review",
+    "operational_complexity": "Moderate",
+    "recommendations": [
+      "*Immediate Priorities**:",
+      ". **Containerization Initiative**",
+      "Containerize worker processes",
+      "Implement Docker Compose for local development",
+      "Prepare for container orchestration",
+      ". **Security Hardening**",
+      "Implement secrets management",
+      "Add service-to-service authentication",
+      "Enhance process isolation",
+      ". **Observability Enhancement**",
+      "Add structured logging",
+      "Implement metrics collection",
+      "Create service health checks",
+      "*Medium-term Improvements**:"
+    ]
+  },
+  "security_analysis": {
+    "analysis": "I'll provide a comprehensive security analysis based on the discovered infrastructure.\n\n## Security Assessment\n\n### 1. Security Vulnerabilities and Risks\n\nCritical Vulnerabilities:\n- Multiple processes running as root unnecessarily (networkd-dispatcher, unattended-upgrades, nginx master)\n- Worker processes (/opt/learnchain/worker.py) lack proper security controls\n- Multiple SSH sessions active simultaneously, increasing attack surface\n- No apparent containerization or process isolation\n- Potential insecure Python dependencies in /opt/learnchain/venv\n\nRisk Level: HIGH\n\n### 2. Access Control and Authentication\n\nCurrent State:\n- Basic Linux user-based access control\n- Multiple processes running under shared 'ubuntu' user\n- No evident service-to-service authentication\n- Polkit daemon present but configuration unknown\n- SSH-based access control in place\n\nGaps:\n- Lack of principle of least privilege implementation\n- No apparent role-based access control (RBAC)\n- Missing service mesh or API gateway controls\n\n### 3. Network Security Posture\n\nConcerns:\n- Nginx configuration requires review (SSL/TLS settings unknown)\n- Multiple SSH sessions could indicate missing connection management\n- No visible network segmentation\n- Potential exposure of internal services\n- Missing network-level access controls\n\n### 4. Data Protection Measures\n\nWeaknesses:\n- No visible encryption-at-rest mechanisms\n- Unclear handling of sensitive data in worker processes\n- Potential logging of sensitive information through rsyslog\n- Missing secrets management solution\n- No apparent data classification controls\n\n### 5. Compliance Considerations\n\nAreas Needing Attention:\n- Process isolation requirements\n- Audit logging capabilities\n- Access control documentation\n- Security monitoring and alerting\n- Incident response procedures\n\n### 6. Priority Security Recommendations\n\nImmediate Actions (24-48 hours):\n1. Implement least privilege access:\n```bash\n# Example: Create dedicated service users\nsudo useradd -r -s /sbin/nologin serviceuser1\nsudo chown serviceuser1:serviceuser1 /opt/learnchain/worker.py\n```\n\n2. Secure Nginx configuration:\n```nginx\nserver {\n    listen 443 ssl http2;\n    ssl_protocols TLSv1.2 TLSv1.3;\n    ssl_ciphers HIGH:!aNULL:!MD5;\n    # Add additional hardening\n}\n```\n\n3. Implement process isolation:\n```yaml\n# Docker-compose.yml example\nversion: '3.8'\nservices:\n  worker:\n    user: nonroot\n    security_opt:\n      - no-new-privileges:true\n    read_only: true\n```\n\nShort-term Actions (1-2 weeks):\n1. Deploy secrets management:\n   - Implement HashiCorp Vault or AWS Secrets Manager\n   - Rotate all existing credentials\n   - Remove hardcoded secrets\n\n2. Enhance authentication:\n```yaml\n# Example service mesh configuration\napiVersion: security.istio.io/v1beta1\nkind: AuthorizationPolicy\nmetadata:\n  name: worker-policy\nspec:\n  selector:\n    matchLabels:\n      app: worker\n  rules:\n  - from:\n    - source:\n        principals: [\"cluster.local/ns/default/sa/authorized-service\"]\n```\n\n3. Implement monitoring and logging:\n```yaml\n# Prometheus monitoring example\nscrape_configs:\n  - job_name: 'worker-metrics'\n    metrics_path: '/metrics'\n    static_configs:\n      - targets: ['worker:8080']\n```\n\nMedium-term Actions (1-3 months):\n1. Implement full containerization strategy\n2. Deploy service mesh for network security\n3. Establish automated security scanning\n4. Develop security compliance documentation\n5. Implement automated incident response\n\n### Additional Recommendations\n\nInfrastructure Hardening:\n```bash\n# System hardening examples\nsudo sysctl -w net.ipv4.tcp_syncookies=1\nsudo sysctl -w net.ipv4.conf.all.accept_redirects=0\nsudo systemctl disable unnecessary-service\n```\n\nMonitoring Setup:\n```yaml\n# Example monitoring configuration\nmonitoring:\n  endpoints:\n    - /health\n    - /metrics\n  alerts:\n    - name: high_error_rate\n      threshold: 5%\n    - name: unusual_activity\n      threshold: 3_stddev\n```\n\nThis assessment reveals significant security gaps requiring immediate attention. The microservices architecture needs substantial hardening, particularly in service isolation, authentication, and monitoring. Implementing these recommendations will significantly improve the security posture of the infrastructure.",
+    "key_findings": [
+      "Multiple processes running as root unnecessarily (networkd-dispatcher, unattended-upgrades, nginx master)",
+      "Worker processes (/opt/learnchain/worker.py) lack proper security controls",
+      "Multiple SSH sessions active simultaneously, increasing attack surface",
+      "No apparent containerization or process isolation",
+      "Potential insecure Python dependencies in /opt/learnchain/venv",
+      "Basic Linux user-based access control",
+      "Multiple processes running under shared 'ubuntu' user",
+      "No evident service-to-service authentication",
+      "Polkit daemon present but configuration unknown",
+      "SSH-based access control in place",
+      "Lack of principle of least privilege implementation",
+      "No apparent role-based access control (RBAC)",
+      "Missing service mesh or API gateway controls",
+      "Nginx configuration requires review (SSL/TLS settings unknown)",
+      "Multiple SSH sessions could indicate missing connection management",
+      "No visible network segmentation",
+      "Potential exposure of internal services",
+      "Missing network-level access controls",
+      "No visible encryption-at-rest mechanisms",
+      "Unclear handling of sensitive data in worker processes",
+      "Potential logging of sensitive information through rsyslog",
+      "Missing secrets management solution",
+      "No apparent data classification controls",
+      "Process isolation requirements",
+      "Audit logging capabilities",
+      "Access control documentation",
+      "Security monitoring and alerting",
+      "Incident response procedures"
+    ],
+    "recommendations": [
+      ". Implement least privilege access:",
+      ". Secure Nginx configuration:",
+      ". Implement process isolation:",
+      "no-new-privileges:true",
+      ". Deploy secrets management:",
+      "Implement HashiCorp Vault or AWS Secrets Manager",
+      "Rotate all existing credentials",
+      "Remove hardcoded secrets",
+      ". Enhance authentication:",
+      "from:",
+      "source:",
+      ". Implement monitoring and logging:",
+      "job_name: 'worker-metrics'",
+      "targets: ['worker:8080']",
+      ". Implement full containerization strategy",
+      ". Deploy service mesh for network security",
+      ". Establish automated security scanning",
+      "/health",
+      "/metrics",
+      "name: high_error_rate",
+      "name: unusual_activity"
+    ],
+    "insights": []
+  },
+  "llm_analysis_summary": {
+    "total_llm_calls": 10,
+    "analysis_stages": 5,
+    "overall_confidence": 0.9,
+    "performance_metrics": {
+      "total_duration": 81.9504668712616,
+      "avg_call_duration": 8.19504668712616
+    }
+  },
+  "scan_statistics": {
+    "processes_analyzed": 18,
+    "files_analyzed": 4,
+    "analysis_depth": "deep",
+    "ai_enabled": true,
+    "total_commands_executed": 58
+  },
+  "analysis_stages": [
+    {
+      "stage": "connection",
+      "status": "completed",
+      "timestamp": "2025-06-23T17:18:23.954889"
+    },
+    {
+      "stage": "discovery",
+      "status": "completed",
+      "timestamp": "2025-06-23T17:18:23.954889"
+    },
+    {
+      "stage": "analysis",
+      "status": "completed",
+      "timestamp": "2025-06-23T17:18:23.954889"
+    }
+  ]
+}
