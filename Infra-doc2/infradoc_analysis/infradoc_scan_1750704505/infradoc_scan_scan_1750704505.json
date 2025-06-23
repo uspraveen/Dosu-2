@@ -1,0 +1,435 @@
+{
+  "host": "ec2-3-143-6-83.us-east-2.compute.amazonaws.com",
+  "scan_id": "scan_1750704505",
+  "timestamp": "2025-06-23T14:48:25.280257",
+  "scan_duration": 35.78073453903198,
+  "processes": [
+    {
+      "pid": 1,
+      "name": "/usr/lib/systemd/systemd",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "1.3",
+      "command": "/usr/lib/systemd/systemd --system --deserialize=68",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 2,
+      "name": "[kthreadd]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[kthreadd]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 3,
+      "name": "[pool_workqueue_release]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[pool_workqueue_release]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 4,
+      "name": "[kworker/R-rcu_g]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[kworker/R-rcu_g]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 5,
+      "name": "[kworker/R-rcu_p]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[kworker/R-rcu_p]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 6,
+      "name": "[kworker/R-slub_]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[kworker/R-slub_]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 7,
+      "name": "[kworker/R-netns]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[kworker/R-netns]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 10,
+      "name": "[kworker/0:0H-events_highpri]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[kworker/0:0H-events_highpri]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 12,
+      "name": "[kworker/R-mm_pe]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[kworker/R-mm_pe]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 13,
+      "name": "[rcu_tasks_rude_kthread]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[rcu_tasks_rude_kthread]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 14,
+      "name": "[rcu_tasks_trace_kthread]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[rcu_tasks_trace_kthread]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 15,
+      "name": "[ksoftirqd/0]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[ksoftirqd/0]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 16,
+      "name": "[rcu_sched]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[rcu_sched]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 17,
+      "name": "[migration/0]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[migration/0]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 18,
+      "name": "[idle_inject/0]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[idle_inject/0]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 19,
+      "name": "[cpuhp/0]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[cpuhp/0]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 20,
+      "name": "[kdevtmpfs]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[kdevtmpfs]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 21,
+      "name": "[kworker/R-inet_]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[kworker/R-inet_]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 23,
+      "name": "[kauditd]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[kauditd]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    },
+    {
+      "pid": 24,
+      "name": "[khungtaskd]",
+      "user": "root",
+      "cpu_percent": "0.0",
+      "memory_percent": "0.0",
+      "command": "[khungtaskd]",
+      "full_command_line": null,
+      "working_dir": null,
+      "service_classification": "unknown",
+      "service_purpose": "Basic process discovery",
+      "integrations_detected": null,
+      "security_concerns": null
+    }
+  ],
+  "application_files": [
+    {
+      "path": "/opt/learnchain/create_course_knowledge_graph_neo.py",
+      "language": "Python",
+      "size": 0,
+      "last_modified": "unknown",
+      "imports": null,
+      "functions": null,
+      "classes": null,
+      "external_services": null
+    },
+    {
+      "path": "/opt/learnchain/worker-2.py",
+      "language": "Python",
+      "size": 0,
+      "last_modified": "unknown",
+      "imports": null,
+      "functions": null,
+      "classes": null,
+      "external_services": null
+    },
+    {
+      "path": "/opt/learnchain/venv/bin/jp.py",
+      "language": "Python",
+      "size": 0,
+      "last_modified": "unknown",
+      "imports": null,
+      "functions": null,
+      "classes": null,
+      "external_services": null
+    },
+    {
+      "path": "/opt/learnchain/venv/lib/python3.12/site-packages/mypy_extensions.py",
+      "language": "Python",
+      "size": 0,
+      "last_modified": "unknown",
+      "imports": null,
+      "functions": null,
+      "classes": null,
+      "external_services": null
+    },
+    {
+      "path": "/opt/learnchain/venv/lib/python3.12/site-packages/banks/__init__.py",
+      "language": "Python",
+      "size": 0,
+      "last_modified": "unknown",
+      "imports": null,
+      "functions": null,
+      "classes": null,
+      "external_services": null
+    },
+    {
+      "path": "/opt/learnchain/venv/lib/python3.12/site-packages/banks/filters/__init__.py",
+      "language": "Python",
+      "size": 0,
+      "last_modified": "unknown",
+      "imports": null,
+      "functions": null,
+      "classes": null,
+      "external_services": null
+    },
+    {
+      "path": "/opt/learnchain/venv/lib/python3.12/site-packages/banks/filters/tool.py",
+      "language": "Python",
+      "size": 0,
+      "last_modified": "unknown",
+      "imports": null,
+      "functions": null,
+      "classes": null,
+      "external_services": null
+    },
+    {
+      "path": "/opt/learnchain/venv/lib/python3.12/site-packages/banks/filters/audio.py",
+      "language": "Python",
+      "size": 0,
+      "last_modified": "unknown",
+      "imports": null,
+      "functions": null,
+      "classes": null,
+      "external_services": null
+    },
+    {
+      "path": "/opt/learnchain/venv/lib/python3.12/site-packages/banks/filters/cache_control.py",
+      "language": "Python",
+      "size": 0,
+      "last_modified": "unknown",
+      "imports": null,
+      "functions": null,
+      "classes": null,
+      "external_services": null
+    },
+    {
+      "path": "/opt/learnchain/venv/lib/python3.12/site-packages/banks/filters/image.py",
+      "language": "Python",
+      "size": 0,
+      "last_modified": "unknown",
+      "imports": null,
+      "functions": null,
+      "classes": null,
+      "external_services": null
+    }
+  ],
+  "infrastructure_insights": {
+    "architecture_pattern": "Standard deployment",
+    "technology_stack": [
+      "Linux"
+    ],
+    "deployment_model": "Server-based",
+    "scalability_assessment": "Unknown",
+    "security_posture": "Needs assessment",
+    "operational_complexity": "Standard",
+    "recommendations": [
+      "Enable AI analysis for detailed insights"
+    ]
+  },
+  "security_analysis": {
+    "analysis": "Basic security scan completed"
+  },
+  "llm_analysis_summary": {
+    "total_llm_calls": 0,
+    "analysis_stages": 0,
+    "overall_confidence": 0.5
+  },
+  "scan_statistics": {
+    "processes_analyzed": 20,
+    "files_analyzed": 10,
+    "analysis_depth": "deep",
+    "ai_enabled": true,
+    "total_commands_executed": 37
+  },
+  "analysis_stages": [
+    {
+      "stage": "connection",
+      "status": "completed",
+      "timestamp": "2025-06-23T14:48:25.280257"
+    },
+    {
+      "stage": "discovery",
+      "status": "completed",
+      "timestamp": "2025-06-23T14:48:25.280257"
+    },
+    {
+      "stage": "analysis",
+      "status": "completed",
+      "timestamp": "2025-06-23T14:48:25.280257"
+    }
+  ]
+}
