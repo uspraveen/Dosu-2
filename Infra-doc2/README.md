@@ -2,6 +2,9 @@
 
 InfraDoc analyzes live server infrastructure and generates useful documentation. It connects to hosts via SSH, collects running processes and configuration files, and can leverage LLMs to produce architecture diagrams and security reports.
 
+# Working-Demo: 
+https://youtu.be/4riPhf1dcAM
+
 ## Project Files
 
 - `infradoc_core.py` – SSH connector, LLM orchestrator and discovery helpers.
