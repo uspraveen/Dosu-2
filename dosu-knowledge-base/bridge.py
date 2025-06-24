@@ -1658,7 +1658,7 @@ async def serve_ui():
 
             <!-- Chat Header -->
             <div class="chat-header">
-                <h1 class="chat-title">Understanding Neo4j graph generation process</h1>
+                <h1 class="chat-title">Dosu-Agent-2.0</h1>
                 <div class="session-sources" id="sessionSources">
                     <!-- Attached sources will appear here -->
                 </div>
