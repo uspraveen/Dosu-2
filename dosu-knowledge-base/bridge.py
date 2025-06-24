@@ -1161,6 +1161,26 @@ async def serve_ui():
             color: rgba(255, 255, 255, 0.95);
         }
 
+        .message-content pre {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+            overflow: auto;
+        }
+
+        .message-content code {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: Menlo, Monaco, monospace;
+            font-size: 0.9em;
+        }
+
+        .message-content a {
+            color: #60a5fa;
+            text-decoration: underline;
+        }
+
         /* Welcome State */
         .welcome-container {
             display: flex;
@@ -1882,10 +1902,39 @@ async def serve_ui():
             `);
         }
 
+        function formatContent(content) {
+            const container = document.createElement('div');
+            container.innerHTML = marked.parse(content);
+
+            // Highlight class and function names outside code blocks
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+            const classRegex = /\b[A-Z][A-Za-z0-9_]*\b/g;
+            const funcRegex = /\b[a-zA-Z_][A-Za-z0-9_]*\(\)/g;
+            const nodes = [];
+            while (walker.nextNode()) {
+                const node = walker.currentNode;
+                const parentTag = node.parentNode.tagName;
+                if (parentTag !== 'CODE' && parentTag !== 'PRE') {
+                    nodes.push(node);
+                }
+            }
+            nodes.forEach(n => {
+                let html = n.nodeValue.replace(funcRegex, '<code>$&</code>').replace(classRegex, '<code>$&</code>');
+                if (html !== n.nodeValue) {
+                    const span = document.createElement('span');
+                    span.innerHTML = html;
+                    n.parentNode.replaceChild(span, n);
+                }
+            });
+
+            return container.innerHTML;
+        }
+
         function addMessage(type, content) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
-            messageDiv.innerHTML = `<div class="message-content">${content}</div>`;
+            const formatted = formatContent(content);
+            messageDiv.innerHTML = `<div class="message-content">${formatted}</div>`;
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
@@ -1905,23 +1954,22 @@ async def serve_ui():
             // Add processing indicator
             const processingDiv = document.createElement('div');
             processingDiv.className = 'message assistant processing';
-            processingDiv.innerHTML = '<div class="message-content">🔄 Processing your query...</div>';
+            processingDiv.innerHTML = '<div class="message-content">🔄 Enhancing your query...</div>';
             chatMessages.appendChild(processingDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
             const phases = [
-    "🔍 Enhancing your query...",
-    "🧠 Found 4 relevant matches",
-    "🛠️ Generating Cypher patterns...",
-    "📦 Retrieving content...",
-    "⚙️ Synthesizing answer..."
-];
-
-let phaseIndex = 0;
-const phaseInterval = setInterval(() => {
-    processingDiv.querySelector('.message-content').innerText = phases[phaseIndex % phases.length];
-    phaseIndex++;
-}, 1000);
+                '🔄 Enhancing your query...',
+                '🛠️ Generating Cypher patterns...',
+                '📦 Retrieving content...',
+                '⚙️ Synthesizing answer...'
+            ];
+            let phaseIndex = 0;
+            const phaseInterval = setInterval(() => {
+                const text = phases[Math.min(phaseIndex, phases.length - 1)];
+                processingDiv.querySelector('.message-content').innerText = text;
+                phaseIndex++;
+            }, 1200);
 
 
             try {
@@ -1942,8 +1990,9 @@ const phaseInterval = setInterval(() => {
                 const result = await response.json();
                 clearInterval(phaseInterval);
 
-                
-                // Remove processing indicator
+                const matches = result.debug_info?.results_count || 0;
+                processingDiv.querySelector('.message-content').innerText = `📊 Found ${matches} matches`;
+                await new Promise(r => setTimeout(r, 1200));
                 processingDiv.remove();
                 
                 // Add response
