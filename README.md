@@ -111,6 +111,9 @@ python codebase-understanding/main.py --repo https://github.com/example/repo --m
 - **Code Understanding**: Quickly grasp complex codebases through structured explanations
 - **Educational Content**: Create learning materials for open-source projects
 
+![image](https://github.com/user-attachments/assets/f354c098-1d6e-4888-b7c4-39624d18db2d)
+
+
 ---
 
 ## 🔍 Module 2: Agentic Web Search
