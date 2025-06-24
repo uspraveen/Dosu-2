@@ -25,12 +25,6 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 import time
 import dotenv
-import sys
-
-# Progress bar and aesthetic imports
-from tqdm import tqdm
-import colorama
-from colorama import Fore, Back, Style
 
 # Neo4j imports
 from neo4j import GraphDatabase
@@ -40,11 +34,8 @@ from neo4j.exceptions import ServiceUnavailable, CypherSyntaxError
 import openai
 from openai import OpenAI
 
-# Initialize colorama for cross-platform colored output
-colorama.init(autoreset=True)
-
-# Configure logging to be less verbose during pretty output
-logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 dotenv.load_dotenv()  # Load environment variables from .env file
@@ -90,53 +81,6 @@ class CypherQuery:
     validation_error: str = None
     fallback_queries: List[str] = None
 
-class PrettyPrinter:
-    """Aesthetic console output with colors and formatting"""
-    
-    @staticmethod
-    def header(text: str):
-        """Print a beautiful header"""
-        print(f"\n{Fore.CYAN}{'='*80}")
-        print(f"{Fore.CYAN}{Style.BRIGHT}🚀 {text}")
-        print(f"{Fore.CYAN}{'='*80}{Style.RESET_ALL}")
-    
-    @staticmethod
-    def step(step_num: int, title: str, description: str = ""):
-        """Print a step with styling"""
-        print(f"\n{Fore.YELLOW}{Style.BRIGHT}📍 Step {step_num}: {title}{Style.RESET_ALL}")
-        if description:
-            print(f"{Fore.WHITE}   {description}{Style.RESET_ALL}")
-    
-    @staticmethod
-    def success(message: str):
-        """Print success message"""
-        print(f"{Fore.GREEN}✅ {message}{Style.RESET_ALL}")
-    
-    @staticmethod
-    def info(message: str):
-        """Print info message"""
-        print(f"{Fore.BLUE}ℹ️  {message}{Style.RESET_ALL}")
-    
-    @staticmethod
-    def warning(message: str):
-        """Print warning message"""
-        print(f"{Fore.YELLOW}⚠️  {message}{Style.RESET_ALL}")
-    
-    @staticmethod
-    def error(message: str):
-        """Print error message"""
-        print(f"{Fore.RED}❌ {message}{Style.RESET_ALL}")
-    
-    @staticmethod
-    def result(key: str, value: str):
-        """Print key-value result"""
-        print(f"{Fore.MAGENTA}📊 {key}:{Style.RESET_ALL} {value}")
-    
-    @staticmethod
-    def separator():
-        """Print a visual separator"""
-        print(f"{Fore.CYAN}{'-'*60}{Style.RESET_ALL}")
-
 class UniversalNeo4jLLMCypherRetriever:
     """
     Universal LLM-to-Cypher pipeline that adapts to any codebase.
@@ -147,10 +91,7 @@ class UniversalNeo4jLLMCypherRetriever:
     
     def __init__(self, openai_api_key: str = None):
         """Initialize with environment-based configuration"""
-        PrettyPrinter.header("Initializing Universal LLM-to-Cypher Pipeline")
-        
         # Neo4j configuration
-        print(f"{Fore.BLUE}🔧 Setting up database connection...{Style.RESET_ALL}")
         self.neo4j_uri = os.getenv('NEO4J_URI')
         self.neo4j_user = os.getenv('NEO4J_USERNAME', 'neo4j')
         self.neo4j_password = os.getenv('NEO4J_PASSWORD')
@@ -168,36 +109,20 @@ class UniversalNeo4jLLMCypherRetriever:
         self._verify_connection()
         
         # OpenAI configuration
-        print(f"{Fore.BLUE}🤖 Setting up AI models...{Style.RESET_ALL}")
         api_key = openai_api_key or os.getenv('OPENAI_API_KEY')
         if not api_key:
             raise ValueError("OpenAI API key required. Set OPENAI_API_KEY environment variable.")
         
         self.openai_client = OpenAI(api_key=api_key)
         self.embedding_model = "text-embedding-3-small"
-        self.llm_model = "gpt-4.1"
+        self.llm_model = "gpt-4o-mini"
         
         # Learn codebase patterns dynamically (with error protection)
-        print(f"{Fore.BLUE}📚 Learning codebase patterns...{Style.RESET_ALL}")
         try:
-            # Schema analysis with progress
-            with tqdm(total=4, desc="Analyzing codebase", colour="blue") as pbar:
-                pbar.set_description("Extracting schema")
-                self.schema = self._extract_schema()
-                pbar.update(1)
-                
-                pbar.set_description("Learning patterns")
-                self.codebase_profile = self._learn_codebase_patterns()
-                pbar.update(1)
-                
-                pbar.set_description("Validating setup")
-                pbar.update(1)
-                
-                pbar.set_description("Finalizing")
-                pbar.update(1)
-                
+            self.schema = self._extract_schema()
+            self.codebase_profile = self._learn_codebase_patterns()
         except Exception as e:
-            PrettyPrinter.error(f"Error during codebase analysis: {e}")
+            logger.error(f"Error during codebase analysis: {e}")
             # Provide minimal fallback
             self.schema = {"nodes": {}, "relationships": {}, "patterns": [], "samples": []}
             self.codebase_profile = CodebaseProfile(
@@ -214,21 +139,21 @@ class UniversalNeo4jLLMCypherRetriever:
         self.vector_search_timeout = 30
         
         try:
-            PrettyPrinter.success("Universal LLM-to-Cypher Pipeline initialized successfully!")
+            logger.info("Universal LLM-to-Cypher Pipeline initialized successfully")
             if hasattr(self, 'codebase_profile') and self.codebase_profile:
-                PrettyPrinter.info(f"Learned {len(self.codebase_profile.common_technologies)} technologies, {len(self.codebase_profile.domain_concepts)} domain concepts")
+                logger.info(f"Learned {len(self.codebase_profile.common_technologies)} technologies, {len(self.codebase_profile.domain_concepts)} domain concepts")
             else:
-                PrettyPrinter.info("Using fallback codebase profile")
+                logger.info("Using fallback codebase profile")
         except Exception as e:
-            PrettyPrinter.warning(f"Initialization warning: {e}")
-            PrettyPrinter.info("Universal LLM-to-Cypher Pipeline initialized with basic configuration")
+            logger.warning(f"Initialization warning: {e}")
+            logger.info("Universal LLM-to-Cypher Pipeline initialized with basic configuration")
     
     def _verify_connection(self):
         """Verify Neo4j connection"""
         try:
             with self.driver.session() as session:
                 result = session.run("RETURN 'Connected' as status")
-                PrettyPrinter.success("Neo4j connection verified")
+                logger.info("Neo4j connection verified")
         except Exception as e:
             raise ConnectionError(f"Neo4j connection failed: {e}")
     
@@ -290,11 +215,11 @@ class UniversalNeo4jLLMCypherRetriever:
                     "samples": [dict(record) for record in samples]
                 }
                 
-                PrettyPrinter.result("Schema", f"{len(schema['nodes'])} node types, {len(schema['relationships'])} relationship types")
+                logger.info(f"Schema extracted: {len(schema['nodes'])} node types, {len(schema['relationships'])} relationship types")
                 return schema
                 
         except Exception as e:
-            PrettyPrinter.error(f"Schema extraction failed: {e}")
+            logger.error(f"Schema extraction failed: {e}")
             return {"nodes": {}, "relationships": {}, "patterns": [], "samples": []}
     
     def _learn_codebase_patterns(self) -> CodebaseProfile:
@@ -389,7 +314,7 @@ Analyze the patterns in this codebase and respond with JSON only:"""
                 )
                 
             except Exception as e:
-                PrettyPrinter.warning(f"Codebase pattern learning failed: {e}")
+                logger.warning(f"Codebase pattern learning failed: {e}")
         
         # Fallback profile with generic patterns (always returned if LLM fails or no data)
         return CodebaseProfile(
@@ -411,8 +336,6 @@ Analyze the patterns in this codebase and respond with JSON only:"""
         """
         Step 0: Enhanced query understanding using learned codebase patterns
         """
-        PrettyPrinter.step(0, "Query Enhancement", "Analyzing intent and generating search strategies")
-        
         # Prepare codebase context for LLM
         codebase_context = {
             "entity_types": self.codebase_profile.entity_types,
@@ -505,19 +428,16 @@ Analyze the query using the learned codebase patterns: "{user_query}"
 Respond with JSON only:"""
 
         try:
-            # Show progress for LLM call
-            with tqdm(total=1, desc="Generating search strategies", colour="green") as pbar:
-                response = self.openai_client.chat.completions.create(
-                    model=self.llm_model,
-                    messages=[{"role": "user", "content": enhancement_prompt}],
-                    temperature=0.1,
-                    max_tokens=800
-                )
-                pbar.update(1)
+            response = self.openai_client.chat.completions.create(
+                model=self.llm_model,
+                messages=[{"role": "user", "content": enhancement_prompt}],
+                temperature=0.1,
+                max_tokens=800
+            )
             
             result = json.loads(response.choices[0].message.content.strip())
             
-            enhanced_query = EnhancedQuery(
+            return EnhancedQuery(
                 original_query=user_query,
                 intent=result.get("intent", ""),
                 search_strategies=result.get("search_strategies", []),
@@ -526,22 +446,13 @@ Respond with JSON only:"""
                 confidence=result.get("confidence", 0.5)
             )
             
-            PrettyPrinter.success(f"Generated {len(enhanced_query.search_strategies)} search strategies")
-            PrettyPrinter.result("Intent", enhanced_query.intent)
-            PrettyPrinter.result("Complexity", enhanced_query.query_complexity)
-            PrettyPrinter.result("Confidence", f"{enhanced_query.confidence:.2f}")
-            
-            return enhanced_query
-            
         except Exception as e:
-            PrettyPrinter.warning(f"Query enhancement failed: {e}")
+            logger.warning(f"Query enhancement failed: {e}")
             # Fallback enhancement with generic strategies
             return self._generate_fallback_enhancement(user_query)
     
     def _generate_fallback_enhancement(self, user_query: str) -> EnhancedQuery:
         """Generate fallback enhancement when LLM fails"""
-        PrettyPrinter.warning("Using fallback query enhancement")
-        
         # Simple keyword-based enhancement
         query_lower = user_query.lower()
         
@@ -596,7 +507,7 @@ Respond with JSON only:"""
             )
             return response.data[0].embedding
         except Exception as e:
-            PrettyPrinter.error(f"Embedding generation failed: {e}")
+            logger.error(f"Embedding generation failed: {e}")
             return []
     
     def _execute_single_vector_search(self, search_strategy: Dict) -> List[Dict]:
@@ -652,16 +563,18 @@ Respond with JSON only:"""
                         "search_strategy": search_strategy["type"]
                     })
                 
+                logger.info(f"Search '{search_strategy['type']}' found {len(results)} results (threshold: 0.4)")
                 return results
                 
         except Exception as e:
+            logger.error(f"Vector search failed for strategy '{search_strategy['type']}': {e}")
             return []
     
     def step2_execute_parallel_searches(self, enhanced_query: EnhancedQuery) -> SearchContext:
         """
         Step 2: Execute multiple vector searches in parallel
         """
-        PrettyPrinter.step(2, "Parallel Vector Search", f"Executing {len(enhanced_query.search_strategies)} search strategies")
+        logger.info(f"Executing {len(enhanced_query.search_strategies)} parallel vector searches...")
         
         strategy_results = {}
         all_entities = []
@@ -670,39 +583,33 @@ Respond with JSON only:"""
         all_nodes = []
         all_scores = []
         
-        # Execute searches in parallel with progress bar
-        with tqdm(total=len(enhanced_query.search_strategies), desc="Vector searches", colour="blue") as pbar:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_parallel_searches) as executor:
-                future_to_strategy = {
-                    executor.submit(self._execute_single_vector_search, strategy): strategy
-                    for strategy in enhanced_query.search_strategies
-                }
-                
-                for future in concurrent.futures.as_completed(future_to_strategy, timeout=self.vector_search_timeout):
-                    strategy = future_to_strategy[future]
-                    try:
-                        results = future.result()
-                        strategy_type = strategy["type"]
-                        strategy_results[strategy_type] = results
+        # Execute searches in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_parallel_searches) as executor:
+            future_to_strategy = {
+                executor.submit(self._execute_single_vector_search, strategy): strategy
+                for strategy in enhanced_query.search_strategies
+            }
+            
+            for future in concurrent.futures.as_completed(future_to_strategy, timeout=self.vector_search_timeout):
+                strategy = future_to_strategy[future]
+                try:
+                    results = future.result()
+                    strategy_type = strategy["type"]
+                    strategy_results[strategy_type] = results
+                    
+                    # Aggregate results with priority weighting
+                    for result in results:
+                        all_entities.append(result["name"])
+                        all_types.append(result["node_type"])
+                        all_paths.append(result["file_path"])
+                        all_nodes.append(result["full_node"])
+                        # Weight scores by strategy priority
+                        weighted_score = result["score"] * (1.0 / strategy.get("priority", 1))
+                        all_scores.append(weighted_score)
                         
-                        # Update progress bar with strategy info
-                        pbar.set_description(f"Completed {strategy_type}")
-                        pbar.update(1)
-                        
-                        # Aggregate results with priority weighting
-                        for result in results:
-                            all_entities.append(result["name"])
-                            all_types.append(result["node_type"])
-                            all_paths.append(result["file_path"])
-                            all_nodes.append(result["full_node"])
-                            # Weight scores by strategy priority
-                            weighted_score = result["score"] * (1.0 / strategy.get("priority", 1))
-                            all_scores.append(weighted_score)
-                            
-                    except Exception as e:
-                        pbar.set_description(f"Failed {strategy['type']}")
-                        pbar.update(1)
-                        strategy_results[strategy["type"]] = []
+                except Exception as e:
+                    logger.error(f"Search strategy '{strategy['type']}' failed: {e}")
+                    strategy_results[strategy["type"]] = []
         
         # Deduplicate while preserving highest scores
         unique_entities = {}
@@ -732,15 +639,7 @@ Respond with JSON only:"""
             dedup_scores.append(entity_data["score"])
         
         total_results = sum(len(results) for results in strategy_results.values())
-        
-        PrettyPrinter.success(f"Parallel search completed!")
-        PrettyPrinter.result("Total Results", str(total_results))
-        PrettyPrinter.result("Unique Entities", str(len(unique_entities)))
-        
-        # Show strategy breakdown
-        for strategy_type, results in strategy_results.items():
-            if results:
-                PrettyPrinter.result(f"Strategy '{strategy_type}'", f"{len(results)} matches")
+        logger.info(f"Parallel search completed: {total_results} total results, {len(unique_entities)} unique entities")
         
         return SearchContext(
             entity_names=dedup_entities,
@@ -756,8 +655,6 @@ Respond with JSON only:"""
         """
         Step 3: Generate Cypher using learned codebase patterns
         """
-        PrettyPrinter.step(3, "Cypher Generation", "Creating schema-aware database query")
-        
         # Prepare context summary
         context_summary = []
         strategy_summaries = []
@@ -850,15 +747,12 @@ Generate the optimal Cypher query for: "{enhanced_query.original_query}"
 Respond with JSON only:"""
 
         try:
-            # Show progress for Cypher generation
-            with tqdm(total=1, desc="Generating Cypher query", colour="yellow") as pbar:
-                response = self.openai_client.chat.completions.create(
-                    model=self.llm_model,
-                    messages=[{"role": "user", "content": cypher_prompt}],
-                    temperature=0.1,
-                    max_tokens=1000
-                )
-                pbar.update(1)
+            response = self.openai_client.chat.completions.create(
+                model=self.llm_model,
+                messages=[{"role": "user", "content": cypher_prompt}],
+                temperature=0.1,
+                max_tokens=1000
+            )
             
             result = json.loads(response.choices[0].message.content.strip())
             
@@ -873,15 +767,10 @@ Respond with JSON only:"""
             # Validate syntax
             cypher_query = self._validate_cypher(cypher_query)
             
-            if cypher_query.is_valid:
-                PrettyPrinter.success("Cypher query generated and validated")
-            else:
-                PrettyPrinter.warning("Cypher validation failed, using fallback")
-                
             return cypher_query
             
         except Exception as e:
-            PrettyPrinter.error(f"Cypher generation failed: {e}")
+            logger.error(f"Cypher generation failed: {e}")
             return CypherQuery(
                 query="",
                 reasoning="Failed to generate query",
@@ -981,10 +870,11 @@ RETURN f.name, f.file_path, f.github_url
             with self.driver.session() as session:
                 session.run(f"EXPLAIN {cypher_query.query}")
                 cypher_query.is_valid = True
+                logger.info("Primary Cypher query validated successfully")
                 return cypher_query
                 
         except CypherSyntaxError as e:
-            PrettyPrinter.warning(f"Primary Cypher syntax error, trying fallbacks")
+            logger.warning(f"Primary Cypher syntax error: {e}")
             cypher_query.is_valid = False
             cypher_query.validation_error = str(e)
             
@@ -994,7 +884,7 @@ RETURN f.name, f.file_path, f.github_url
                     try:
                         with self.driver.session() as session:
                             session.run(f"EXPLAIN {fallback}")
-                        PrettyPrinter.success(f"Fallback query {i+1} validated successfully")
+                        logger.info(f"Fallback query {i+1} validated successfully")
                         cypher_query.query = fallback
                         cypher_query.is_valid = True
                         cypher_query.validation_error = None
@@ -1006,45 +896,39 @@ RETURN f.name, f.file_path, f.github_url
             return cypher_query
             
         except Exception as e:
-            PrettyPrinter.warning(f"Cypher validation failed: {e}")
+            logger.warning(f"Cypher validation failed: {e}")
             cypher_query.is_valid = False
             cypher_query.validation_error = str(e)
             return cypher_query
     
     def step4_execute_cypher(self, cypher_query: CypherQuery) -> List[Dict]:
         """Execute validated Cypher query with fallback support"""
-        PrettyPrinter.step(4, "Query Execution", "Running Cypher query against database")
-        
         if not cypher_query.is_valid:
-            PrettyPrinter.error(f"Cannot execute invalid Cypher: {cypher_query.validation_error}")
+            logger.error(f"Cannot execute invalid Cypher: {cypher_query.validation_error}")
             return []
         
         try:
-            with tqdm(total=1, desc="Executing query", colour="green") as pbar:
-                with self.driver.session() as session:
-                    result = session.run(cypher_query.query)
-                    records = [dict(record) for record in result]
-                    pbar.update(1)
-                    
-            PrettyPrinter.success(f"Query executed successfully")
-            PrettyPrinter.result("Records Found", str(len(records)))
-            return records
+            with self.driver.session() as session:
+                result = session.run(cypher_query.query)
+                records = [dict(record) for record in result]
+                logger.info(f"Cypher execution returned {len(records)} records")
+                return records
                 
         except Exception as e:
-            PrettyPrinter.error(f"Cypher execution failed: {e}")
+            logger.error(f"Cypher execution failed: {e}")
             
             # Try fallback queries
             if cypher_query.fallback_queries:
                 for i, fallback in enumerate(cypher_query.fallback_queries):
                     try:
-                        PrettyPrinter.info(f"Trying fallback query {i+1}...")
+                        logger.info(f"Trying fallback query {i+1}...")
                         with self.driver.session() as session:
                             result = session.run(fallback)
                             records = [dict(record) for record in result]
-                            PrettyPrinter.success(f"Fallback query {i+1} returned {len(records)} records")
+                            logger.info(f"Fallback query {i+1} returned {len(records)} records")
                             return records
                     except Exception as fallback_error:
-                        PrettyPrinter.warning(f"Fallback query {i+1} failed")
+                        logger.warning(f"Fallback query {i+1} failed: {fallback_error}")
                         continue
             
             return []
@@ -1052,8 +936,6 @@ RETURN f.name, f.file_path, f.github_url
     def step5_format_response(self, enhanced_query: EnhancedQuery, cypher_query: CypherQuery, 
                              query_results: List[Dict], search_context: SearchContext) -> str:
         """Format comprehensive response with learned context"""
-        PrettyPrinter.step(5, "Response Formatting", "Creating comprehensive answer")
-        
         if not query_results:
             return self._format_no_results_response(enhanced_query, cypher_query, search_context)
         
@@ -1128,20 +1010,17 @@ Generate a comprehensive response for: "{enhanced_query.original_query}"
 Format as markdown:"""
 
         try:
-            with tqdm(total=1, desc="Formatting response", colour="magenta") as pbar:
-                response = self.openai_client.chat.completions.create(
-                    model=self.llm_model,
-                    messages=[{"role": "user", "content": response_prompt}],
-                    temperature=0.3,
-                    max_tokens=1200
-                )
-                pbar.update(1)
+            response = self.openai_client.chat.completions.create(
+                model=self.llm_model,
+                messages=[{"role": "user", "content": response_prompt}],
+                temperature=0.3,
+                max_tokens=1200
+            )
             
-            PrettyPrinter.success("Response formatted successfully")
             return response.choices[0].message.content.strip()
             
         except Exception as e:
-            PrettyPrinter.error(f"Response formatting failed: {e}")
+            logger.error(f"Response formatting failed: {e}")
             return self._format_fallback_response(enhanced_query, query_results, search_context)
     
     def _format_no_results_response(self, enhanced_query: EnhancedQuery, cypher_query: CypherQuery, 
@@ -1221,10 +1100,9 @@ Format as markdown:"""
         start_time = time.time()
         debug_info = {}
         
-        PrettyPrinter.header(f"Processing Query: \"{user_query}\"")
-        
         try:
             # Step 0: Enhanced query understanding with learned patterns
+            logger.info("Step 0: Enhancing query with learned codebase patterns...")
             enhanced_query = self.step0_enhance_query(user_query)
             debug_info["enhanced_query"] = {
                 "intent": enhanced_query.intent,
@@ -1234,6 +1112,7 @@ Format as markdown:"""
             }
             
             # Step 2: Parallel vector searches with optimized texts
+            logger.info("Step 2: Executing parallel vector searches...")
             search_context = self.step2_execute_parallel_searches(enhanced_query)
             debug_info["search_context"] = {
                 "total_results": sum(len(results) for results in search_context.search_strategy_results.values()),
@@ -1242,6 +1121,7 @@ Format as markdown:"""
             }
             
             # Step 3: Adaptive Cypher generation
+            logger.info("Step 3: Generating adaptive Cypher query...")
             cypher_query = self.step3_generate_cypher(enhanced_query, search_context)
             debug_info["cypher_query"] = {
                 "query": cypher_query.query,
@@ -1251,10 +1131,12 @@ Format as markdown:"""
             }
             
             # Step 4: Execute with fallbacks
+            logger.info("Step 4: Executing Cypher with fallback support...")
             query_results = self.step4_execute_cypher(cypher_query)
             debug_info["results_count"] = len(query_results)
             
             # Step 5: Adaptive formatting
+            logger.info("Step 5: Formatting adaptive response...")
             response = self.step5_format_response(enhanced_query, cypher_query, query_results, search_context)
             
             elapsed_time = time.time() - start_time
@@ -1262,21 +1144,18 @@ Format as markdown:"""
             debug_info["pipeline_version"] = "universal_v1"
             debug_info["learned_technologies"] = self.codebase_profile.common_technologies
             
-            PrettyPrinter.separator()
-            PrettyPrinter.success(f"Pipeline completed in {elapsed_time:.2f}s")
-            PrettyPrinter.separator()
-            
+            logger.info(f"Universal pipeline completed in {elapsed_time:.2f}s")
             return response, debug_info
             
         except Exception as e:
-            PrettyPrinter.error(f"Universal pipeline failed: {e}")
+            logger.error(f"Universal pipeline failed: {e}")
             return f"An error occurred: {str(e)}", {"error": str(e)}
     
     def close(self):
         """Close database connections"""
         if self.driver:
             self.driver.close()
-            PrettyPrinter.success("Neo4j connection closed")
+            logger.info("Neo4j connection closed")
 
 
 # Usage example
@@ -1286,32 +1165,35 @@ def main():
         retriever = UniversalNeo4jLLMCypherRetriever()
         
         test_queries = [
-            "How to create a simple chain"
+            "CLI commands",
+            "authentication functions", 
+            "where is class ExampleLinksDirective defined?",
+            "database operations",
+            "API endpoint handlers"
         ]
         
         for query in test_queries:
+            print(f"\n{'='*80}")
+            print(f"Query: {query}")
+            print('='*80)
+            
             response, debug = retriever.search(query)
             
-            # Print the beautiful response
-            print(f"\n{Fore.GREEN}{Style.BRIGHT}🎯 QUERY RESULTS{Style.RESET_ALL}")
-            print(f"{Fore.CYAN}{'='*80}{Style.RESET_ALL}")
             print(f"\n{response}")
             
-            # Print debug information with colors
-            print(f"\n{Fore.YELLOW}{Style.BRIGHT}🔍 DEBUG INFORMATION{Style.RESET_ALL}")
-            print(f"{Fore.CYAN}{'-'*60}{Style.RESET_ALL}")
-            PrettyPrinter.result("Technologies Learned", str(debug.get('learned_technologies', [])))
-            PrettyPrinter.result("Intent", debug.get('enhanced_query', {}).get('intent', 'N/A'))
-            PrettyPrinter.result("Strategies", str(debug.get('enhanced_query', {}).get('strategies_count', 0)))
-            PrettyPrinter.result("Unique Entities", str(debug.get('search_context', {}).get('unique_entities', 0)))
-            PrettyPrinter.result("Final Results", str(debug.get('results_count', 0)))
-            PrettyPrinter.result("Execution Time", debug.get('execution_time', 'N/A'))
+            print(f"\n**Debug Info:**")
+            print(f"- Technologies Learned: {debug.get('learned_technologies', [])}")
+            print(f"- Intent: {debug.get('enhanced_query', {}).get('intent', 'N/A')}")
+            print(f"- Strategies: {debug.get('enhanced_query', {}).get('strategies_count', 0)}")
+            print(f"- Unique Entities: {debug.get('search_context', {}).get('unique_entities', 0)}")
+            print(f"- Results: {debug.get('results_count', 0)}")
+            print(f"- Execution Time: {debug.get('execution_time', 'N/A')}")
         
         retriever.close()
         
     except Exception as e:
-        PrettyPrinter.error(f"Error: {e}")
-        print(f"{Fore.YELLOW}Ensure environment variables are set: NEO4J_URI, NEO4J_PASSWORD, OPENAI_API_KEY{Style.RESET_ALL}")
+        print(f"Error: {e}")
+        print("Ensure environment variables are set: NEO4J_URI, NEO4J_PASSWORD, OPENAI_API_KEY")
 
 
 if __name__ == "__main__":
