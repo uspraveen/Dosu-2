@@ -42,3 +42,6 @@ paramiko
 tqdm
 colorama
 rich
+
+fastapi
+uvicorn
