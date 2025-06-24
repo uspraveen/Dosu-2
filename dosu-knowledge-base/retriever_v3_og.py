@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # enhanced_retriever.py
 """
-Universal GraphRAG LLM-to-Cypher Pipeline with FastAPI Integration
+Universal GraphRAG LLM-to-Cypher Pipeline
 
 An intelligent code retrieval system that adapts to any codebase:
 0. Dynamic Schema Analysis → Learns codebase patterns automatically
@@ -26,8 +26,6 @@ from dataclasses import dataclass
 import time
 import dotenv
 import sys
-import uuid
-from datetime import datetime
 
 # Progress bar and aesthetic imports
 from tqdm import tqdm
@@ -42,13 +40,6 @@ from neo4j.exceptions import ServiceUnavailable, CypherSyntaxError
 import openai
 from openai import OpenAI
 
-# FastAPI imports
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-import uvicorn
-from fastapi.middleware.cors import CORSMiddleware
-
 # Initialize colorama for cross-platform colored output
 colorama.init(autoreset=True)
 
@@ -57,9 +48,6 @@ logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s -
 logger = logging.getLogger(__name__)
 
 dotenv.load_dotenv()  # Load environment variables from .env file
-
-# Global event storage for real-time streaming
-EVENT_STREAMS = {}
 
 @dataclass
 class CodebaseProfile:
@@ -102,47 +90,8 @@ class CypherQuery:
     validation_error: str = None
     fallback_queries: List[str] = None
 
-# Pydantic models for FastAPI
-class QueryRequest(BaseModel):
-    query: str
-    session_id: str
-
-class QueryResponse(BaseModel):
-    response: str
-    debug_info: Dict
-    session_id: str
-    timestamp: str
-
-class StreamEvent(BaseModel):
-    type: str  # "step", "success", "error", "info", "result"
-    message: str
-    step_number: Optional[int] = None
-    data: Optional[Dict] = None
-
 class PrettyPrinter:
-    """Aesthetic console output with colors and formatting + FastAPI streaming"""
-    
-    current_session_id = None
-    
-    @staticmethod
-    def set_session(session_id: str):
-        """Set current session for streaming"""
-        PrettyPrinter.current_session_id = session_id
-        if session_id not in EVENT_STREAMS:
-            EVENT_STREAMS[session_id] = []
-    
-    @staticmethod
-    def _emit_event(event_type: str, message: str, step_number: int = None, data: Dict = None):
-        """Emit event for both console and streaming"""
-        if PrettyPrinter.current_session_id:
-            event = {
-                "type": event_type,
-                "message": message,
-                "step_number": step_number,
-                "data": data,
-                "timestamp": datetime.now().isoformat()
-            }
-            EVENT_STREAMS[PrettyPrinter.current_session_id].append(event)
+    """Aesthetic console output with colors and formatting"""
     
     @staticmethod
     def header(text: str):
@@ -150,7 +99,6 @@ class PrettyPrinter:
         print(f"\n{Fore.CYAN}{'='*80}")
         print(f"{Fore.CYAN}{Style.BRIGHT}🚀 {text}")
         print(f"{Fore.CYAN}{'='*80}{Style.RESET_ALL}")
-        PrettyPrinter._emit_event("header", text)
     
     @staticmethod
     def step(step_num: int, title: str, description: str = ""):
@@ -158,43 +106,36 @@ class PrettyPrinter:
         print(f"\n{Fore.YELLOW}{Style.BRIGHT}📍 Step {step_num}: {title}{Style.RESET_ALL}")
         if description:
             print(f"{Fore.WHITE}   {description}{Style.RESET_ALL}")
-        PrettyPrinter._emit_event("step", f"{title}: {description}", step_num)
     
     @staticmethod
     def success(message: str):
         """Print success message"""
         print(f"{Fore.GREEN}✅ {message}{Style.RESET_ALL}")
-        PrettyPrinter._emit_event("success", message)
     
     @staticmethod
     def info(message: str):
         """Print info message"""
         print(f"{Fore.BLUE}ℹ️  {message}{Style.RESET_ALL}")
-        PrettyPrinter._emit_event("info", message)
     
     @staticmethod
     def warning(message: str):
         """Print warning message"""
         print(f"{Fore.YELLOW}⚠️  {message}{Style.RESET_ALL}")
-        PrettyPrinter._emit_event("warning", message)
     
     @staticmethod
     def error(message: str):
         """Print error message"""
         print(f"{Fore.RED}❌ {message}{Style.RESET_ALL}")
-        PrettyPrinter._emit_event("error", message)
     
     @staticmethod
     def result(key: str, value: str):
         """Print key-value result"""
         print(f"{Fore.MAGENTA}📊 {key}:{Style.RESET_ALL} {value}")
-        PrettyPrinter._emit_event("result", f"{key}: {value}")
     
     @staticmethod
     def separator():
         """Print a visual separator"""
         print(f"{Fore.CYAN}{'-'*60}{Style.RESET_ALL}")
-        PrettyPrinter._emit_event("separator", "---")
 
 class UniversalNeo4jLLMCypherRetriever:
     """
@@ -234,7 +175,7 @@ class UniversalNeo4jLLMCypherRetriever:
         
         self.openai_client = OpenAI(api_key=api_key)
         self.embedding_model = "text-embedding-3-small"
-        self.llm_model = "gpt-4o-mini"
+        self.llm_model = "gpt-4.1"
         
         # Learn codebase patterns dynamically (with error protection)
         print(f"{Fore.BLUE}📚 Learning codebase patterns...{Style.RESET_ALL}")
@@ -1270,7 +1211,7 @@ Format as markdown:"""
         
         return response
     
-    def search(self, user_query: str, session_id: str = None) -> Tuple[str, Dict]:
+    def search(self, user_query: str) -> Tuple[str, Dict]:
         """
         Universal search interface that adapts to any codebase
         
@@ -1279,10 +1220,6 @@ Format as markdown:"""
         """
         start_time = time.time()
         debug_info = {}
-        
-        # Set session for streaming
-        if session_id:
-            PrettyPrinter.set_session(session_id)
         
         PrettyPrinter.header(f"Processing Query: \"{user_query}\"")
         
@@ -1342,106 +1279,7 @@ Format as markdown:"""
             PrettyPrinter.success("Neo4j connection closed")
 
 
-# Initialize FastAPI app
-app = FastAPI(title="Universal LLM-to-Cypher API", version="1.0.0")
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Global retriever instance
-retriever = None
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize retriever on startup"""
-    global retriever
-    try:
-        retriever = UniversalNeo4jLLMCypherRetriever()
-        print("✅ Retriever initialized successfully")
-    except Exception as e:
-        print(f"❌ Failed to initialize retriever: {e}")
-        retriever = None
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    global retriever
-    if retriever:
-        retriever.close()
-
-@app.post("/query", response_model=QueryResponse)
-async def query_endpoint(request: QueryRequest, background_tasks: BackgroundTasks):
-    """Process a query request"""
-    if not retriever:
-        raise HTTPException(status_code=500, detail="Retriever not initialized")
-    
-    try:
-        # Process query in background
-        response, debug_info = retriever.search(request.query, request.session_id)
-        
-        return QueryResponse(
-            response=response,
-            debug_info=debug_info,
-            session_id=request.session_id,
-            timestamp=datetime.now().isoformat()
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/stream/{session_id}")
-async def stream_events(session_id: str):
-    """Stream real-time events for a session"""
-    def event_generator():
-        if session_id not in EVENT_STREAMS:
-            EVENT_STREAMS[session_id] = []
-        
-        last_index = 0
-        while True:
-            events = EVENT_STREAMS[session_id]
-            if len(events) > last_index:
-                for event in events[last_index:]:
-                    yield f"data: {json.dumps(event)}\n\n"
-                last_index = len(events)
-            
-            time.sleep(0.5)  # Poll every 500ms
-    
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/plain",
-        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}
-    )
-
-@app.get("/events/{session_id}")
-async def get_events(session_id: str):
-    """Get all events for a session"""
-    if session_id not in EVENT_STREAMS:
-        return {"events": []}
-    
-    return {"events": EVENT_STREAMS[session_id]}
-
-@app.post("/new_session")
-async def new_session():
-    """Create a new session"""
-    session_id = str(uuid.uuid4())
-    EVENT_STREAMS[session_id] = []
-    return {"session_id": session_id}
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "retriever_initialized": retriever is not None,
-        "timestamp": datetime.now().isoformat()
-    }
-
-# Usage example (for standalone running)
+# Usage example
 def main():
     """Example usage of the Universal LLM-to-Cypher Pipeline"""
     try:
@@ -1477,13 +1315,4 @@ def main():
 
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--api", action="store_true", help="Run as FastAPI server")
-    parser.add_argument("--port", type=int, default=8001, help="Port for FastAPI server")
-    args = parser.parse_args()
-    
-    if args.api:
-        uvicorn.run(app, host="0.0.0.0", port=args.port)
-    else:
-        main()
+    main()
