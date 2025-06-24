@@ -1880,26 +1880,26 @@ async def serve_ui():
             inputOverlay.classList.add('hidden');
             
             // Add initial assistant message
-            addMessage('assistant', `
-                🎉 Great! I'm now connected to your repository. Here's what I can help you with:
-                <br><br>
-                <strong>🔍 Code Discovery:</strong>
-                <br>• "Show me all authentication functions"
-                <br>• "Find CLI command handlers"
-                <br>• "How does the database layer work?"
-                <br><br>
-                <strong>📊 Architecture Analysis:</strong>
-                <br>• "Explain the project structure"
-                <br>• "What are the main dependencies?"
-                <br>• "Show me the API endpoints"
-                <br><br>
-                <strong>⚡ Quick Navigation:</strong>
-                <br>• "Where is the user model defined?"
-                <br>• "Find all error handling code"
-                <br>• "Show me the configuration files"
-                <br><br>
-                Go ahead and ask me anything! 🚀
-            `);
+            addMessage('assistant', [
+                "🎉 Great! I'm now connected to your repository. Here's what I can help you with:",
+                "<br><br>",
+                "<strong>🔍 Code Discovery:</strong>",
+                "<br>• \"Show me all authentication functions\"",
+                "<br>• \"Find CLI command handlers\"",
+                "<br>• \"How does the database layer work?\"",
+                "<br><br>",
+                "<strong>📊 Architecture Analysis:</strong>",
+                "<br>• \"Explain the project structure\"",
+                "<br>• \"What are the main dependencies?\"",
+                "<br>• \"Show me the API endpoints\"",
+                "<br><br>",
+                "<strong>⚡ Quick Navigation:</strong>",
+                "<br>• \"Where is the user model defined?\"",
+                "<br>• \"Find all error handling code\"",
+                "<br>• \"Show me the configuration files\"",
+                "<br><br>",
+                "Go ahead and ask me anything! 🚀"
+            ].join(''));
         }
 
         function formatContent(content) {
