@@ -255,6 +255,9 @@ The system creates a rich graph schema in Neo4j:
 
 InfraDoc connects to running servers via SSH, discovers processes and configuration files, and can use LLMs to generate detailed infrastructure documentation.
 
+Working Demo: https://youtu.be/4riPhf1dcAM
+
+
 ### 🔧 Core Features
 
 - SSH-based service discovery
