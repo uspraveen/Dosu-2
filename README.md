@@ -23,13 +23,14 @@ Following Dosu's tagline **"You build, Dosu documents"**, this system automates 
 
 ## 🏗️ System Architecture
 
-The system consists of three main modules, each addressing different aspects of code intelligence:
+The system consists of four main modules, each addressing different aspects of code intelligence:
 
 ```mermaid
 graph TB
     A[Dosu-2 System] --> B[Codebase Understanding Module]
-    A --> C[Agentic Web Search Module] 
+    A --> C[Agentic Web Search Module]
     A --> D[Knowledge Base Module]
+    A --> E[InfraDoc Module]
     
     B --> B1[Code Analysis]
     B --> B2[Tutorial Generation]
@@ -40,8 +41,10 @@ graph TB
     C --> C3[Web Crawling]
     
     D --> D1[AST Analysis]
-    D --> D2[Graph Generation] 
+    D --> D2[Graph Generation]
     D --> D3[Knowledge Graphs]
+    E --> E1[SSH Discovery]
+    E --> E2[AI Documentation]
 ```
 
 ---
@@ -243,6 +246,37 @@ The system creates a rich graph schema in Neo4j:
 - **Impact Analysis**: Trace function calls and inheritance hierarchies
 - **Similar Code Discovery**: Find code with similar functionality using embeddings
 - **Architecture Visualization**: Generate comprehensive codebase overviews
+
+---
+
+## 🖥️ Module 4: InfraDoc
+
+**Location**: `Infra-doc2/`
+
+InfraDoc connects to running servers via SSH, discovers processes and configuration files, and can use LLMs to generate detailed infrastructure documentation.
+
+### 🔧 Core Features
+
+- SSH-based service discovery
+- Optional AI analysis for security and architecture insights
+- Markdown reports and mermaid diagrams
+- Quick and deep scan modes via CLI
+
+### 🚀 Quick Start
+
+```bash
+# Quick scan
+python Infra-doc2/infradoc_cli.py quick --host server.example.com --key-file ~/.ssh/id_rsa
+
+# Deep analysis with full documentation
+python Infra-doc2/infradoc_cli.py deep --host server.example.com --key-file ~/.ssh/id_rsa
+```
+
+### 🎯 Use Cases
+
+- Infrastructure onboarding
+- Security auditing
+- Architecture visualization
 
 ---
 
