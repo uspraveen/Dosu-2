@@ -1161,6 +1161,26 @@ async def serve_ui():
             color: rgba(255, 255, 255, 0.95);
         }
 
+        .message-content pre {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+            overflow: auto;
+        }
+
+        .message-content code {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: Menlo, Monaco, monospace;
+            font-size: 0.9em;
+        }
+
+        .message-content a {
+            color: #60a5fa;
+            text-decoration: underline;
+        }
+
         /* Welcome State */
         .welcome-container {
             display: flex;
@@ -1522,7 +1542,7 @@ async def serve_ui():
                         </div>
 
                         <div class="repos-list">
-                            <div class="repo-card" draggable="true" data-repo="uspraveen/dosu-chat">
+                            <div class="repo-card" draggable="true" data-repo="uspraveen/dosu2">
                                 <div class="repo-info">
                                     <div class="repo-icon">DC</div>
                                     <div class="repo-details">
@@ -1532,11 +1552,11 @@ async def serve_ui():
                                 </div>
                             </div>
 
-                            <div class="repo-card" draggable="true" data-repo="uspraveen/langflow">
+                            <div class="repo-card" draggable="true" data-repo="uspraveen/langChain">
                                 <div class="repo-info">
                                     <div class="repo-icon">LF</div>
                                     <div class="repo-details">
-                                        <h4>uspraveen/langflow</h4>
+                                        <h4>uspraveen/langChain</h4>
                                         <p>Visual flow builder for AI</p>
                                     </div>
                                 </div>
@@ -1599,52 +1619,25 @@ async def serve_ui():
 
             <div class="history-list">
                 <div class="history-item active">
-                    <div class="history-title-text">Understanding Neo4j graph generation process</div>
-                    <div class="history-preview">how does neo4j graph generation work here</div>
+                    <div class="history-title-text">Understanding Chain creation process</div>
+                    <div class="history-preview">how does chains work here</div>
                     <div class="history-meta">
-                        <div class="history-time">Last Friday</div>
+                        <div class="history-time">Today</div>
                     </div>
                 </div>
+            
 
-                <div class="history-item">
-                    <div class="history-title-text">FastAPI authentication implementation</div>
-                    <div class="history-preview">show me how to implement JWT auth in FastAPI</div>
-                    <div class="history-meta">
-                        <div class="history-time">2 days ago</div>
-                    </div>
-                </div>
-
-                <div class="history-item">
-                    <div class="history-title-text">Database migration strategies</div>
-                    <div class="history-preview">what are the best practices for database migrations</div>
-                    <div class="history-meta">
-                        <div class="history-time">1 week ago</div>
-                    </div>
-                </div>
-
-                <div class="history-item">
-                    <div class="history-title-text">React component optimization</div>
-                    <div class="history-preview">how to optimize React components for performance</div>
-                    <div class="history-meta">
-                        <div class="history-time">1 week ago</div>
-                    </div>
-                </div>
+                
 
                 <div class="history-item">
                     <div class="history-title-text">API rate limiting implementation</div>
                     <div class="history-preview">implement rate limiting for REST API endpoints</div>
                     <div class="history-meta">
-                        <div class="history-time">2 weeks ago</div>
+                        <div class="history-time">Yesterday</div>
                     </div>
                 </div>
 
-                <div class="history-item">
-                    <div class="history-title-text">GraphQL schema design patterns</div>
-                    <div class="history-preview">best practices for designing GraphQL schemas</div>
-                    <div class="history-meta">
-                        <div class="history-time">3 weeks ago</div>
-                    </div>
-                </div>
+                
             </div>
         </div>
 
@@ -1860,32 +1853,44 @@ async def serve_ui():
             inputOverlay.classList.add('hidden');
             
             // Add initial assistant message
-            addMessage('assistant', `
-                🎉 Great! I'm now connected to your repository. Here's what I can help you with:
-                <br><br>
-                <strong>🔍 Code Discovery:</strong>
-                <br>• "Show me all authentication functions"
-                <br>• "Find CLI command handlers"
-                <br>• "How does the database layer work?"
-                <br><br>
-                <strong>📊 Architecture Analysis:</strong>
-                <br>• "Explain the project structure"
-                <br>• "What are the main dependencies?"
-                <br>• "Show me the API endpoints"
-                <br><br>
-                <strong>⚡ Quick Navigation:</strong>
-                <br>• "Where is the user model defined?"
-                <br>• "Find all error handling code"
-                <br>• "Show me the configuration files"
-                <br><br>
+            addMessage('assistant', `Great! I'm now connected to your repository:
                 Go ahead and ask me anything! 🚀
             `);
+        }
+
+        function formatContent(content) {
+            const container = document.createElement('div');
+            container.innerHTML = marked.parse(content);
+
+            // Highlight class and function names outside code blocks
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+            const classRegex = /\b[A-Z][A-Za-z0-9_]*\b/g;
+            const funcRegex = /\b[a-zA-Z_][A-Za-z0-9_]*\(\)/g;
+            const nodes = [];
+            while (walker.nextNode()) {
+                const node = walker.currentNode;
+                const parentTag = node.parentNode.tagName;
+                if (parentTag !== 'CODE' && parentTag !== 'PRE') {
+                    nodes.push(node);
+                }
+            }
+            nodes.forEach(n => {
+                let html = n.nodeValue.replace(funcRegex, '<code>$&</code>').replace(classRegex, '<code>$&</code>');
+                if (html !== n.nodeValue) {
+                    const span = document.createElement('span');
+                    span.innerHTML = html;
+                    n.parentNode.replaceChild(span, n);
+                }
+            });
+
+            return container.innerHTML;
         }
 
         function addMessage(type, content) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
-            messageDiv.innerHTML = `<div class="message-content">${content}</div>`;
+            const formatted = formatContent(content);
+            messageDiv.innerHTML = `<div class="message-content">${formatted}</div>`;
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
@@ -1905,23 +1910,22 @@ async def serve_ui():
             // Add processing indicator
             const processingDiv = document.createElement('div');
             processingDiv.className = 'message assistant processing';
-            processingDiv.innerHTML = '<div class="message-content">🔄 Processing your query...</div>';
+            processingDiv.innerHTML = '<div class="message-content">🔄 Enhancing your query...</div>';
             chatMessages.appendChild(processingDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
             const phases = [
-    "🔍 Enhancing your query...",
-    "🧠 Found 4 relevant matches",
-    "🛠️ Generating Cypher patterns...",
-    "📦 Retrieving content...",
-    "⚙️ Synthesizing answer..."
-];
-
-let phaseIndex = 0;
-const phaseInterval = setInterval(() => {
-    processingDiv.querySelector('.message-content').innerText = phases[phaseIndex % phases.length];
-    phaseIndex++;
-}, 1000);
+                '🔄 Enhancing your query...',
+                '🛠️ Generating Cypher patterns...',
+                '📦 Retrieving content...',
+                '⚙️ Synthesizing answer...'
+            ];
+            let phaseIndex = 0;
+            const phaseInterval = setInterval(() => {
+                const text = phases[Math.min(phaseIndex, phases.length - 1)];
+                processingDiv.querySelector('.message-content').innerText = text;
+                phaseIndex++;
+            }, 1200);
 
 
             try {
@@ -1942,8 +1946,9 @@ const phaseInterval = setInterval(() => {
                 const result = await response.json();
                 clearInterval(phaseInterval);
 
-                
-                // Remove processing indicator
+                const matches = result.debug_info?.results_count || 0;
+                processingDiv.querySelector('.message-content').innerText = `📊 Found ${matches} matches`;
+                await new Promise(r => setTimeout(r, 1200));
                 processingDiv.remove();
                 
                 // Add response
