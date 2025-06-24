@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-InfraDoc 2.0 - Core Infrastructure Components
-Contains SSH connector, LLM orchestrator, and smart discovery classes.
+InfraDoc 2.0 - Enhanced Core Infrastructure Components
+Contains SSH connector, LLM orchestrator, and intelligent smart discovery classes.
 """
 
 import os
@@ -14,7 +14,7 @@ import threading
 import paramiko
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Any, Union
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from enum import Enum
 import re
@@ -266,6 +266,7 @@ class AnalysisStage(Enum):
     PROCESS_CLASSIFICATION = "process_classification"
     FILE_DISCOVERY = "file_discovery"
     CODE_ANALYSIS = "code_analysis"
+    BUSINESS_INTELLIGENCE = "business_intelligence"
     SERVICE_MAPPING = "service_mapping"
     ARCHITECTURE_SYNTHESIS = "architecture_synthesis"
     SECURITY_ANALYSIS = "security_analysis"
@@ -325,7 +326,7 @@ class LLMProvider:
             raise
     
     def call(self, prompt: str, system_prompt: str = None, 
-             max_tokens: int = 5000, temperature: float = 0.1) -> Dict:
+             max_tokens: int = 4000, temperature: float = 0.1) -> Dict:
         """
         Make LLM call with enhanced JSON handling.
         
@@ -491,8 +492,8 @@ class LLMOrchestrator:
         if providers is None:
             providers = [
                 {"provider": "openai", "model": "gpt-4o"},
-                {"provider": "grok", "model": "grok-3"},
-                {"provider": "claude", "model": "claude-3-5-sonnet-20241022"}
+                {"provider": "claude", "model": "claude-3-5-sonnet-20241022"},
+                {"provider": "grok", "model": "grok-3"}
             ]
         
         initialized_providers = []
@@ -599,7 +600,7 @@ class LLMOrchestrator:
         }
 
 # ================================================================================
-# SMART INFRASTRUCTURE DISCOVERY
+# ENHANCED DATA STRUCTURES
 # ================================================================================
 
 @dataclass
@@ -620,7 +621,7 @@ class ProcessInfo:
 
 @dataclass
 class ApplicationFile:
-    """Comprehensive application file analysis."""
+    """Basic application file structure."""
     path: str
     language: str
     size: int
@@ -629,6 +630,36 @@ class ApplicationFile:
     functions: List[str] = None
     classes: List[str] = None
     external_services: List[str] = None
+
+@dataclass
+class EnhancedApplicationFile:
+    """Enhanced application file with comprehensive intelligence."""
+    path: str
+    language: str
+    size: int
+    last_modified: str
+    
+    # Basic analysis (existing)
+    imports: List[str] = field(default_factory=list)
+    functions: List[str] = field(default_factory=list)
+    classes: List[str] = field(default_factory=list)
+    external_services: List[str] = field(default_factory=list)
+    
+    # Enhanced intelligence fields
+    api_endpoints: List[Dict] = field(default_factory=list)
+    database_models: List[Dict] = field(default_factory=list)
+    environment_variables: List[Dict] = field(default_factory=list)
+    security_concerns: List[Dict] = field(default_factory=list)
+    business_logic_summary: str = ""
+    performance_notes: List[str] = field(default_factory=list)
+    
+    # Code quality metrics
+    complexity_score: int = 0
+    documentation_quality: str = "Unknown"
+    
+    # Dependencies and integrations
+    external_apis: List[Dict] = field(default_factory=list)
+    database_connections: List[str] = field(default_factory=list)
 
 @dataclass
 class InfrastructureInsights:
@@ -640,6 +671,10 @@ class InfrastructureInsights:
     security_posture: str
     operational_complexity: str
     recommendations: List[str]
+
+# ================================================================================
+# INTELLIGENT SMART DISCOVERY
+# ================================================================================
 
 class SmartDiscovery:
     """LLM-guided infrastructure discovery and analysis."""
@@ -680,18 +715,22 @@ class SmartDiscovery:
             # Stage 3: File Discovery
             file_context = self._stage3_file_discovery(host, process_context)
             
-            # Stage 4: Code Analysis
-            code_context = self._stage4_code_analysis(host, file_context)
+            # Stage 4: Enhanced Code Analysis
+            code_context = self._stage4_enhanced_code_analysis(host, file_context)
             
-            # Stage 5: Architecture Synthesis
-            architecture_insights = self._stage5_architecture_synthesis(host, code_context)
+            # Stage 5: Business Intelligence
+            business_context = self._stage5_business_intelligence(host, code_context)
             
-            # Stage 6: Security Analysis
-            security_analysis = self._stage6_security_analysis(host, architecture_insights)
+            # Stage 6: Architecture Synthesis
+            architecture_insights = self._stage6_architecture_synthesis(host, business_context)
+            
+            # Stage 7: Security Analysis
+            security_analysis = self._stage7_security_analysis(host, architecture_insights)
             
             return {
                 'processes': self.discovered_data.get('processes', []),
-                'files': self.discovered_data.get('files', []),
+                'files': self.discovered_data.get('enhanced_files', []),
+                'business_intelligence': self.discovered_data.get('business_intelligence', {}),
                 'infrastructure_insights': asdict(architecture_insights),
                 'security_analysis': security_analysis,
                 'llm_analysis_summary': self.llm.get_analysis_summary()
@@ -871,9 +910,9 @@ Provide detailed classification for infrastructure understanding.
         # Focus on actual application files, exclude virtual environments
         file_searches = [
             # Application Python files (exclude site-packages and venv)
-            f'find {" ".join(app_directories)} -name "*.py" -type f ! -path "*/site-packages/*" ! -path "*/venv/*" ! -path "*/__pycache__/*" 2>/dev/null | head -10',
+            f'find {" ".join(app_directories)} -name "*.py" -type f ! -path "*/site-packages/*" ! -path "*/venv/*" ! -path "*/__pycache__/*" 2>/dev/null | head -15',
             # JavaScript application files
-            f'find {" ".join(app_directories)} -name "*.js" -type f ! -path "*/node_modules/*" ! -path "*/venv/*" 2>/dev/null | head -5',
+            f'find {" ".join(app_directories)} -name "*.js" -type f ! -path "*/node_modules/*" ! -path "*/venv/*" 2>/dev/null | head -10',
             # Configuration files
             f'find {" ".join(app_directories)} -name "*.conf" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" 2>/dev/null | grep -v "/venv/" | head -10',
             # Project files
@@ -911,18 +950,18 @@ Provide detailed classification for infrastructure understanding.
             'configuration_files': config_files
         }
     
-    def _stage4_code_analysis(self, host: str, file_context: Dict) -> Dict:
-        """Stage 4: Code analysis."""
-        logger.info("[DISCOVERY] Stage 4: Code analysis")
+    def _stage4_enhanced_code_analysis(self, host: str, file_context: Dict) -> Dict:
+        """Stage 4: Enhanced code analysis with full file intelligence."""
+        logger.info("[DISCOVERY] Stage 4: Enhanced code analysis")
         
         analyzed_files = []
         configuration_files = []
         
-        # Analyze application files
+        # Analyze application files with enhanced intelligence
         for file_path in file_context.get('discovered_files', [])[:10]:
-            file_analysis = self._analyze_file(host, file_path)
-            if file_analysis:
-                analyzed_files.append(file_analysis)
+            enhanced_file = self._analyze_file_with_intelligence(host, file_path)
+            if enhanced_file:
+                analyzed_files.append(enhanced_file)
         
         # Analyze configuration files
         for file_path in file_context.get('configuration_files', [])[:5]:
@@ -930,139 +969,166 @@ Provide detailed classification for infrastructure understanding.
             if config_analysis:
                 configuration_files.append(config_analysis)
         
-        # LLM analyzes code patterns - focus on application architecture
-        code_analysis_prompt = f"""
-Analyze these APPLICATION FILES for architecture insights. Focus on business logic and application structure:
-
-APPLICATION FILES:
-{json.dumps([asdict(f) for f in analyzed_files], indent=2, default=str)[:5000]}
-
-CONFIGURATION FILES:
-{json.dumps(configuration_files, indent=2, default=str)[:2000]}
-
-Determine:
-1. APPLICATION ARCHITECTURE patterns (microservices, monolith, etc.)
-2. BUSINESS LOGIC and core application functionality
-3. EXTERNAL SERVICE integrations (AWS, databases, APIs)
-4. APPLICATION ENTRY POINTS and main workflows
-5. DEPLOYMENT and service configuration patterns
-
-IGNORE library imports and focus on:
-- Application-specific code patterns
-- Business domain logic
-- Service configurations
-- Infrastructure setup
-
-Provide comprehensive application architecture analysis.
-"""
-
-        system_prompt = """You are a software architect analyzing APPLICATION CODE and INFRASTRUCTURE.
-        Focus on business logic, application architecture, and deployment patterns.
-        Distinguish between application code and library dependencies.
-        Prioritize insights about the actual application being built."""
-        
-        response = self.llm.progressive_analysis(
-            stage=AnalysisStage.CODE_ANALYSIS,
-            prompt=code_analysis_prompt,
-            system_prompt=system_prompt,
-            context=file_context
-        )
-        
-        self.discovered_data['files'] = analyzed_files
+        self.discovered_data['enhanced_files'] = analyzed_files
         self.discovered_data['configuration_files'] = configuration_files
         
         return {
             'analyzed_files': analyzed_files,
-            'configuration_files': configuration_files,
-            'llm_analysis': response.get('parsed', {})
+            'configuration_files': configuration_files
         }
     
-    def _stage5_architecture_synthesis(self, host: str, code_context: Dict) -> InfrastructureInsights:
-        """Stage 5: Architecture synthesis."""
-        logger.info("[DISCOVERY] Stage 5: Architecture synthesis")
+    def _stage5_business_intelligence(self, host: str, code_context: Dict) -> Dict:
+        """Stage 5: Extract business intelligence from code analysis."""
+        logger.info("[DISCOVERY] Stage 5: Business intelligence extraction")
+        
+        enhanced_files = code_context.get('analyzed_files', [])
+        
+        business_intelligence_prompt = f"""
+BUSINESS INTELLIGENCE ANALYSIS
+
+Analyze these application files for complete business understanding:
+
+APPLICATION FILES WITH ENHANCED DATA:
+{json.dumps([asdict(f) for f in enhanced_files], indent=2, default=str)[:12000]}
+
+Extract comprehensive business intelligence:
+
+{{
+  "business_domain": "e-commerce|finance|healthcare|education|logistics|social|saas|other",
+  "primary_business_functions": ["main business capabilities"],
+  "application_purpose": "What problem does this solve for users?",
+  "data_flows": [
+    {{"from": "source", "to": "destination", "data_type": "user_data", "description": "flow description"}}
+  ],
+  "critical_workflows": ["most important business processes"],
+  "integration_architecture": {{
+    "external_apis": ["list of external APIs used"],
+    "databases": ["database systems detected"],
+    "message_queues": ["queue systems if any"],
+    "caching": ["caching solutions"]
+  }},
+  "scaling_characteristics": {{
+    "bottlenecks": ["potential performance bottlenecks"],
+    "scaling_strategy": "horizontal|vertical|both",
+    "resource_intensive_operations": ["operations that use most resources"]
+  }},
+  "technology_insights": {{
+    "framework_patterns": ["web framework patterns detected"],
+    "architectural_style": "microservices|monolith|layered|event-driven",
+    "deployment_complexity": "simple|moderate|complex"
+  }}
+}}
+
+Focus on BUSINESS VALUE and practical understanding.
+"""
+
+        system_prompt = """You are a senior business analyst and technical architect.
+        Extract business intelligence that helps stakeholders understand the value,
+        purpose, and operational characteristics of this system."""
+        
+        response = self.llm.progressive_analysis(
+            stage=AnalysisStage.BUSINESS_INTELLIGENCE,
+            prompt=business_intelligence_prompt,
+            system_prompt=system_prompt,
+            context=code_context
+        )
+        
+        business_intelligence = response.get('parsed', {})
+        self.discovered_data['business_intelligence'] = business_intelligence
+        
+        return {
+            'business_intelligence': business_intelligence,
+            'enhanced_files': enhanced_files
+        }
+    
+    def _stage6_architecture_synthesis(self, host: str, business_context: Dict) -> InfrastructureInsights:
+        """Stage 6: Architecture synthesis with business intelligence."""
+        logger.info("[DISCOVERY] Stage 6: Architecture synthesis")
         
         # Combine all analysis data
         complete_analysis = {
             'processes': [asdict(p) for p in self.discovered_data.get('processes', [])],
-            'application_files': [asdict(f) for f in self.discovered_data.get('files', [])],
+            'enhanced_files': [asdict(f) for f in self.discovered_data.get('enhanced_files', [])],
             'configuration_files': self.discovered_data.get('configuration_files', []),
-            'code_analysis': code_context.get('llm_analysis', {})
+            'business_intelligence': self.discovered_data.get('business_intelligence', {})
         }
         
         synthesis_prompt = f"""
-Synthesize complete infrastructure analysis focusing on APPLICATION ARCHITECTURE and DEPLOYMENT:
+COMPREHENSIVE ARCHITECTURE SYNTHESIS
 
-PROCESSES (Application Workers and Services):
+Synthesize complete infrastructure analysis with business context:
+
+BUSINESS INTELLIGENCE:
+{json.dumps(complete_analysis['business_intelligence'], indent=2, default=str)[:3000]}
+
+APPLICATION PROCESSES:
 {json.dumps([p for p in complete_analysis['processes'] if p.get('service_classification') in ['application', 'background_worker', 'web_server']], indent=2, default=str)[:3000]}
 
-APPLICATION FILES (Business Logic):
-{json.dumps(complete_analysis['application_files'], indent=2, default=str)[:4000]}
+ENHANCED APPLICATION FILES:
+{json.dumps(complete_analysis['enhanced_files'], indent=2, default=str)[:5000]}
 
-CONFIGURATION FILES (Infrastructure Setup):
-{json.dumps(complete_analysis['configuration_files'], indent=2, default=str)[:2000]}
+Provide comprehensive synthesis:
 
-CODE ANALYSIS INSIGHTS:
-{json.dumps(complete_analysis['code_analysis'], indent=2, default=str)[:3000]}
+{{
+  "architecture_pattern": "microservices|monolith|layered|event-driven|hybrid",
+  "technology_stack": ["all technologies actually in use"],
+  "deployment_model": "cloud-native|traditional|hybrid|containerized",
+  "scalability_assessment": "excellent|good|moderate|limited|poor", 
+  "security_posture": "excellent|good|needs-attention|concerning|critical",
+  "operational_complexity": "simple|moderate|complex|very-complex",
+  "recommendations": [
+    "specific actionable recommendations for improvement"
+  ]
+}}
 
-Provide:
-1. OVERALL ARCHITECTURE PATTERN (microservices, monolith, event-driven, etc.)
-2. COMPLETE TECHNOLOGY STACK (focus on what's actually being used for business logic)
-3. DEPLOYMENT MODEL (how services are deployed and managed)
-4. SCALABILITY ANALYSIS (current setup and scaling potential)
-5. SECURITY POSTURE (based on actual application security practices)
-6. OPERATIONAL COMPLEXITY (deployment, monitoring, maintenance complexity)
-7. STRATEGIC RECOMMENDATIONS (prioritize application-level improvements)
-
-Focus on APPLICATION ARCHITECTURE insights, not library dependencies.
-Give comprehensive infrastructure insights for strategic decision making.
+Focus on strategic insights that help decision-making.
 """
 
         system_prompt = """You are a senior infrastructure architect providing strategic analysis.
-        Focus on APPLICATION ARCHITECTURE, DEPLOYMENT PATTERNS, and BUSINESS VALUE.
-        Synthesize technical findings into executive-level insights and recommendations.
-        Distinguish between application code and supporting libraries."""
+        Synthesize technical findings into executive-level insights and actionable recommendations."""
         
         response = self.llm.progressive_analysis(
             stage=AnalysisStage.ARCHITECTURE_SYNTHESIS,
             prompt=synthesis_prompt,
             system_prompt=system_prompt,
-            context=code_context
+            context=business_context
         )
         
         insights_data = response.get('parsed', {})
         
         return InfrastructureInsights(
-            architecture_pattern=insights_data.get('architecture_pattern', 'Microservices'),
+            architecture_pattern=insights_data.get('architecture_pattern', 'Unknown'),
             technology_stack=insights_data.get('technology_stack', []),
-            deployment_model=insights_data.get('deployment_model', 'Cloud-based'),
-            scalability_assessment=insights_data.get('scalability_assessment', 'Moderate'),
-            security_posture=insights_data.get('security_posture', 'Needs Review'),
-            operational_complexity=insights_data.get('operational_complexity', 'Moderate'),
+            deployment_model=insights_data.get('deployment_model', 'Unknown'),
+            scalability_assessment=insights_data.get('scalability_assessment', 'Unknown'),
+            security_posture=insights_data.get('security_posture', 'Unknown'),
+            operational_complexity=insights_data.get('operational_complexity', 'Unknown'),
             recommendations=insights_data.get('recommendations', [])
         )
     
-    def _stage6_security_analysis(self, host: str, architecture_insights: InfrastructureInsights) -> Dict:
-        """Stage 6: Security analysis."""
-        logger.info("[DISCOVERY] Stage 6: Security analysis")
+    def _stage7_security_analysis(self, host: str, architecture_insights: InfrastructureInsights) -> Dict:
+        """Stage 7: Comprehensive security analysis."""
+        logger.info("[DISCOVERY] Stage 7: Security analysis")
         
         security_prompt = f"""
-Perform security analysis based on discovered infrastructure:
+Perform comprehensive security analysis:
 
 ARCHITECTURE: {asdict(architecture_insights)}
 PROCESSES: {[asdict(p) for p in self.discovered_data.get('processes', [])]}
+ENHANCED FILES: {[asdict(f) for f in self.discovered_data.get('enhanced_files', [])]}
 
 Analyze:
 1. Security vulnerabilities and risks
-2. Access control and authentication
+2. Access control and authentication mechanisms  
 3. Network security posture
 4. Data protection measures
-5. Compliance considerations
+5. Code-level security concerns
 6. Priority security recommendations
 
-Provide actionable security assessment.
+Provide actionable security assessment with specific remediation steps.
 """
 
-        system_prompt = """You are a cybersecurity expert analyzing infrastructure security.
+        system_prompt = """You are a cybersecurity expert analyzing production infrastructure.
         Focus on practical vulnerabilities and implementable security improvements."""
         
         response = self.llm.progressive_analysis(
@@ -1074,6 +1140,166 @@ Provide actionable security assessment.
         
         return response.get('parsed', {})
     
+    def _analyze_file_with_intelligence(self, host: str, file_path: str) -> Optional[EnhancedApplicationFile]:
+        """Analyze file with comprehensive intelligence."""
+        try:
+            # Get file stats
+            stdout, stderr, exit_code, _ = self.connector.execute_command(
+                host, f'stat -c "%s %Y" "{file_path}" 2>/dev/null', 'file_stats'
+            )
+            
+            if exit_code != 0:
+                return None
+            
+            stats = stdout.split()
+            size = int(stats[0]) if len(stats) > 0 else 0
+            
+            # Skip very large files to avoid token limits
+            if size > 500 * 1024:  # 500KB limit
+                logger.info(f"Skipping large file: {file_path} ({size} bytes)")
+                return None
+            
+            # Get full file content for analysis
+            stdout, stderr, exit_code, _ = self.connector.execute_command(
+                host, f'cat "{file_path}" 2>/dev/null', 'full_file_content'
+            )
+            
+            if exit_code != 0 or not stdout.strip():
+                return None
+            
+            content = stdout
+            language = self._detect_language(file_path)
+            
+            # Enhanced LLM analysis
+            intelligence = self._extract_file_intelligence(content, file_path, language)
+            
+            return EnhancedApplicationFile(
+                path=file_path,
+                language=language,
+                size=size,
+                last_modified=datetime.fromtimestamp(int(stats[1])).isoformat() if len(stats) > 1 else 'unknown',
+                
+                # Basic fields (enhanced)
+                imports=intelligence.get('imports', []),
+                functions=intelligence.get('functions', []),
+                classes=intelligence.get('classes', []),
+                external_services=intelligence.get('external_services', []),
+                
+                # Enhanced intelligence fields
+                api_endpoints=intelligence.get('api_endpoints', []),
+                database_models=intelligence.get('database_models', []),
+                environment_variables=intelligence.get('environment_variables', []),
+                security_concerns=intelligence.get('security_concerns', []),
+                business_logic_summary=intelligence.get('business_logic_summary', ''),
+                performance_notes=intelligence.get('performance_notes', []),
+                complexity_score=intelligence.get('complexity_score', 0),
+                documentation_quality=intelligence.get('documentation_quality', 'Unknown'),
+                external_apis=intelligence.get('external_apis', []),
+                database_connections=intelligence.get('database_connections', [])
+            )
+            
+        except Exception as e:
+            logger.debug(f"Enhanced file analysis failed for {file_path}: {e}")
+            return None
+    
+    def _extract_file_intelligence(self, content: str, file_path: str, language: str) -> Dict:
+        """Extract comprehensive intelligence from file content using LLM."""
+        
+        # Limit content to avoid token limits but ensure we get meaningful analysis
+        analysis_content = content[:15000] if len(content) > 15000 else content
+        
+        intelligence_prompt = f"""
+COMPREHENSIVE FILE INTELLIGENCE EXTRACTION
+
+File: {file_path} ({language})
+Purpose: Extract complete understanding for intelligent documentation
+
+CODE CONTENT:
+```{language}
+{analysis_content}
+```
+
+Extract and return JSON with detailed analysis:
+
+{{
+  "business_logic_summary": "Clear explanation of what this file does for the business",
+  "api_endpoints": [
+    {{
+      "path": "/api/path",
+      "method": "GET|POST|PUT|DELETE",
+      "handler_function": "function_name", 
+      "parameters": ["param1", "param2"],
+      "description": "What this endpoint does"
+    }}
+  ],
+  "database_models": [
+    {{
+      "model_name": "ModelName",
+      "table_name": "table_name",
+      "fields": [
+        {{"name": "field", "type": "string", "description": "purpose"}}
+      ],
+      "relationships": ["related_models"]
+    }}
+  ],
+  "environment_variables": [
+    {{
+      "variable_name": "ENV_VAR",
+      "usage_context": "How it's used",
+      "default_value": "default",
+      "is_required": true,
+      "description": "Purpose"
+    }}
+  ],
+  "security_concerns": [
+    {{
+      "concern_type": "authentication|authorization|data_exposure|injection", 
+      "severity": "low|medium|high|critical",
+      "description": "Specific security issue",
+      "recommendation": "How to fix"
+    }}
+  ],
+  "performance_notes": ["Performance considerations and bottlenecks"],
+  "external_apis": [
+    {{"service": "service_name", "endpoint": "url", "purpose": "why used"}}
+  ],
+  "database_connections": ["connection details"],
+  "imports": ["all imports found"],
+  "functions": ["function names with brief purpose"],
+  "classes": ["class names with brief purpose"],
+  "external_services": ["external service integrations"],
+  "complexity_score": 1-10,
+  "documentation_quality": "Poor|Fair|Good|Excellent"
+}}
+
+FOCUS ON BUSINESS VALUE:
+- What business problem does this solve?
+- How does this integrate with other systems?
+- What would break if this failed?
+- What are the key workflows?
+
+Return only valid JSON.
+"""
+
+        system_prompt = """You are a senior software architect analyzing production code.
+        Extract comprehensive intelligence that helps developers understand the business purpose,
+        technical implementation, and practical considerations for maintaining this code."""
+        
+        try:
+            response = self.llm.progressive_analysis(
+                stage=AnalysisStage.CODE_ANALYSIS,
+                prompt=intelligence_prompt,
+                system_prompt=system_prompt,
+                context={'file_path': file_path, 'language': language}
+            )
+            
+            return response.get('parsed', {})
+            
+        except Exception as e:
+            logger.debug(f"Intelligence extraction failed for {file_path}: {e}")
+            return {}
+    
+    # Helper methods from original implementation...
     def _is_application_process(self, command: str, user: str) -> bool:
         """Identify real application processes."""
         command_lower = command.lower()
@@ -1139,48 +1365,6 @@ Provide actionable security assessment.
             return proc_info
         except Exception as e:
             logger.debug(f"Failed to get process details for PID {pid}: {e}")
-            return None
-    
-    def _analyze_file(self, host: str, file_path: str) -> Optional[ApplicationFile]:
-        """Analyze application file."""
-        try:
-            # Get file info and content
-            commands = [
-                (f'stat -c "%s %Y" "{file_path}" 2>/dev/null', 'file_stats'),
-                (f'head -n 50 "{file_path}" 2>/dev/null', 'file_content')
-            ]
-            
-            file_info = {}
-            for cmd, key in commands:
-                stdout, stderr, exit_code, execution = self.connector.execute_command(
-                    host, cmd, f'file_analysis_{key}'
-                )
-                file_info[key] = stdout
-            
-            if not file_info.get('file_content'):
-                return None
-            
-            # Parse file details
-            stats = file_info.get('file_stats', '').split()
-            size = int(stats[0]) if len(stats) > 0 else 0
-            modified_timestamp = int(stats[1]) if len(stats) > 1 else 0
-            
-            content = file_info['file_content']
-            language = self._detect_language(file_path)
-            
-            return ApplicationFile(
-                path=file_path,
-                language=language,
-                size=size,
-                last_modified=datetime.fromtimestamp(modified_timestamp).isoformat() if modified_timestamp else 'unknown',
-                imports=self._extract_imports(content, language),
-                functions=self._extract_functions(content, language),
-                classes=self._extract_classes(content, language),
-                external_services=self._extract_external_services(content)
-            )
-            
-        except Exception as e:
-            logger.debug(f"Failed to analyze file {file_path}: {e}")
             return None
     
     def _analyze_configuration_file(self, host: str, file_path: str) -> Optional[Dict]:
@@ -1249,40 +1433,6 @@ Provide actionable security assessment.
             '.conf': 'Config'
         }
         return lang_map.get(extension, 'Unknown')
-    
-    def _extract_imports(self, content: str, language: str) -> List[str]:
-        """Extract import statements."""
-        imports = []
-        if language == 'Python':
-            patterns = [r'from\s+([^\s]+)\s+import', r'import\s+([^\s,\n]+)']
-            for pattern in patterns:
-                imports.extend(re.findall(pattern, content))
-        return list(set(imports))[:10]
-    
-    def _extract_functions(self, content: str, language: str) -> List[str]:
-        """Extract function names."""
-        if language == 'Python':
-            return re.findall(r'def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(', content)[:10]
-        return []
-    
-    def _extract_classes(self, content: str, language: str) -> List[str]:
-        """Extract class names."""
-        if language == 'Python':
-            return re.findall(r'class\s+([a-zA-Z_][a-zA-Z0-9_]*)', content)[:5]
-        return []
-    
-    def _extract_external_services(self, content: str) -> List[str]:
-        """Extract external service references."""
-        services = []
-        patterns = [
-            r'boto3\.client\([\'"]([^\'"]+)[\'"]',
-            r'\.amazonaws\.com',
-            r'redis://',
-            r'mongodb://'
-        ]
-        for pattern in patterns:
-            services.extend(re.findall(pattern, content))
-        return list(set(services))[:5]
     
     def _extract_classification(self, proc_data: Dict, llm_insights: Dict) -> str:
         """Extract process classification from LLM insights."""

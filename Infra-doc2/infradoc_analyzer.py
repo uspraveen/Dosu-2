@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-InfraDoc 2.0 - Main Infrastructure Analyzer
-Progressive analysis orchestrator that coordinates discovery, intelligence, and documentation.
+InfraDoc 2.0 - Enhanced Infrastructure Analyzer
+Progressive analysis orchestrator with intelligent discovery and business understanding.
 """
 
 import os
@@ -15,64 +15,71 @@ from dataclasses import dataclass, asdict
 
 from infradoc_core import (
     SSHConnector, LLMOrchestrator, SmartDiscovery, 
-    ConnectionConfig, ProcessInfo, ApplicationFile, InfrastructureInsights
+    ConnectionConfig, ProcessInfo, ApplicationFile, EnhancedApplicationFile, InfrastructureInsights
 )
 
 logger = logging.getLogger(__name__)
 
 # ================================================================================
-# ANALYSIS CONFIGURATION AND RESULTS
+# ENHANCED ANALYSIS CONFIGURATION AND RESULTS
 # ================================================================================
 
 @dataclass
 class AnalysisConfig:
     """Configuration for infrastructure analysis."""
-    scan_depth: str = "standard"  # standard, deep, quick
+    scan_depth: str = "standard"  # standard, deep, quick, intelligent
     enable_ai: bool = True
     max_llm_calls: int = 15
     output_formats: List[str] = None
     export_artifacts: bool = True
     include_security: bool = True
     include_documentation: bool = True
+    enable_business_intelligence: bool = False
+    enable_enhanced_analysis: bool = False
 
 @dataclass
-class ScanReport:
-    """Complete scan report with all analysis results."""
+class EnhancedScanReport:
+    """Enhanced scan report with intelligence and business understanding."""
     host: str
     scan_id: str
     timestamp: str
     scan_duration: float
     
-    # Core results
+    # Core results (enhanced)
     processes: List[ProcessInfo]
-    application_files: List[ApplicationFile]
+    application_files: List[EnhancedApplicationFile]
     infrastructure_insights: InfrastructureInsights
     security_analysis: Dict[str, Any]
     
+    # Enhanced intelligence
+    business_intelligence: Dict[str, Any] = None
+    api_documentation: Dict[str, Any] = None
+    deployment_intelligence: Dict[str, Any] = None
+    
     # Metadata
-    llm_analysis_summary: Dict[str, Any]
-    scan_statistics: Dict[str, Any]
-    analysis_stages: List[Dict[str, Any]]
+    llm_analysis_summary: Dict[str, Any] = None
+    scan_statistics: Dict[str, Any] = None
+    analysis_stages: List[Dict[str, Any]] = None
 
 @dataclass
 class AnalysisResult:
     """Complete analysis result with all generated artifacts."""
-    scan_report: ScanReport
+    scan_report: EnhancedScanReport
     artifacts_generated: List[str]
     output_directory: str
     documentation_generated: bool
     success: bool
     error_message: Optional[str] = None
 
-class InfrastructureAnalyzer:
+class IntelligentInfrastructureAnalyzer:
     """
-    Main orchestrator for progressive infrastructure analysis.
-    Coordinates discovery, intelligence, and documentation generation.
+    Enhanced orchestrator for intelligent infrastructure analysis.
+    Coordinates discovery, intelligence extraction, and documentation generation.
     """
     
     def __init__(self, llm_providers: List[Dict] = None, output_base_dir: str = "infradoc_analysis"):
         """
-        Initialize the Infrastructure Analyzer.
+        Initialize the Intelligent Infrastructure Analyzer.
         
         Args:
             llm_providers: List of LLM provider configurations
@@ -99,12 +106,12 @@ class InfrastructureAnalyzer:
             self.smart_discovery = SmartDiscovery(self.ssh_connector, self.llm_orchestrator)
             logger.info("[ANALYZER] Smart discovery initialized")
         
-        logger.info("[ANALYZER] Infrastructure Analyzer initialized")
+        logger.info("[ANALYZER] Intelligent Infrastructure Analyzer initialized")
     
     def analyze_infrastructure(self, connection_config: ConnectionConfig, 
                              analysis_config: AnalysisConfig = None) -> AnalysisResult:
         """
-        Perform complete infrastructure analysis.
+        Perform complete intelligent infrastructure analysis.
         
         Args:
             connection_config: SSH connection configuration
@@ -124,7 +131,7 @@ class InfrastructureAnalyzer:
         output_dir = self.output_base_dir / f"infradoc_{scan_id}"
         output_dir.mkdir(exist_ok=True)
         
-        logger.info(f"[ANALYZER] Starting infrastructure analysis: {scan_id}")
+        logger.info(f"[ANALYZER] Starting intelligent infrastructure analysis: {scan_id}")
         logger.info(f"[ANALYZER] Target: {connection_config.host}")
         logger.info(f"[ANALYZER] Output: {output_dir}")
         
@@ -140,15 +147,15 @@ class InfrastructureAnalyzer:
                     error_message="Failed to establish SSH connection"
                 )
             
-            # Stage 2: Perform Discovery
+            # Stage 2: Perform Enhanced Discovery
             if analysis_config.enable_ai and self.smart_discovery:
-                discovery_results = self._perform_smart_discovery(connection_config.host, analysis_config)
+                discovery_results = self._perform_intelligent_discovery(connection_config.host, analysis_config)
             else:
                 discovery_results = self._perform_basic_discovery(connection_config.host)
             
-            # Stage 3: Create Scan Report
+            # Stage 3: Create Enhanced Scan Report
             scan_duration = time.time() - start_time
-            scan_report = self._create_scan_report(
+            scan_report = self._create_enhanced_scan_report(
                 host=connection_config.host,
                 scan_id=scan_id,
                 timestamp=timestamp.isoformat(),
@@ -158,12 +165,12 @@ class InfrastructureAnalyzer:
             )
             
             # Stage 4: Generate Artifacts
-            artifacts = self._generate_artifacts(scan_report, output_dir, analysis_config)
+            artifacts = self._generate_enhanced_artifacts(scan_report, output_dir, analysis_config)
             
-            # Stage 5: Generate Documentation
+            # Stage 5: Generate Intelligent Documentation
             documentation_generated = False
             if analysis_config.include_documentation:
-                documentation_generated = self._generate_documentation(scan_report, output_dir)
+                documentation_generated = self._generate_intelligent_documentation(scan_report, output_dir)
             
             # Create final result
             result = AnalysisResult(
@@ -223,21 +230,87 @@ class InfrastructureAnalyzer:
         
         return success
     
-    def _perform_smart_discovery(self, host: str, config: AnalysisConfig) -> Dict[str, Any]:
-        """Perform AI-powered smart discovery."""
-        logger.info("[ANALYZER] Performing smart discovery with AI")
+    def _perform_intelligent_discovery(self, host: str, config: AnalysisConfig) -> Dict[str, Any]:
+        """Perform AI-powered intelligent discovery with business understanding."""
+        logger.info("[ANALYZER] Performing intelligent discovery with business intelligence")
         
         try:
             discovery_results = self.smart_discovery.discover_infrastructure(host)
-            logger.info("[ANALYZER] Smart discovery completed")
+            
+            # Extract business intelligence if available
+            if 'business_intelligence' in discovery_results:
+                logger.info("[ANALYZER] Business intelligence extracted successfully")
+            
+            # Extract API documentation if available  
+            api_docs = self._extract_api_documentation(discovery_results)
+            if api_docs:
+                discovery_results['api_documentation'] = api_docs
+                logger.info("[ANALYZER] API documentation extracted")
+            
+            # Extract deployment intelligence
+            deployment_intel = self._extract_deployment_intelligence(discovery_results)
+            if deployment_intel:
+                discovery_results['deployment_intelligence'] = deployment_intel
+                logger.info("[ANALYZER] Deployment intelligence extracted")
+            
+            logger.info("[ANALYZER] Intelligent discovery completed")
             return discovery_results
         except Exception as e:
-            logger.error(f"[ANALYZER] Smart discovery failed: {e}")
+            logger.error(f"[ANALYZER] Intelligent discovery failed: {e}")
             logger.info("[ANALYZER] Falling back to basic discovery")
             return self._perform_basic_discovery(host)
     
+    def _extract_api_documentation(self, discovery_results: Dict) -> Dict:
+        """Extract API documentation from enhanced files."""
+        api_docs = {
+            'endpoints': [],
+            'models': [],
+            'authentication': [],
+            'base_url': 'http://localhost'
+        }
+        
+        enhanced_files = discovery_results.get('files', [])
+        for file_info in enhanced_files:
+            if hasattr(file_info, 'api_endpoints') and file_info.api_endpoints:
+                api_docs['endpoints'].extend(file_info.api_endpoints)
+            
+            if hasattr(file_info, 'database_models') and file_info.database_models:
+                api_docs['models'].extend(file_info.database_models)
+        
+        return api_docs if api_docs['endpoints'] or api_docs['models'] else None
+    
+    def _extract_deployment_intelligence(self, discovery_results: Dict) -> Dict:
+        """Extract deployment intelligence from processes and files."""
+        deployment_intel = {
+            'deployment_type': 'unknown',
+            'service_management': 'unknown',
+            'containerization': False,
+            'web_server': None,
+            'process_manager': None,
+            'environment_setup': []
+        }
+        
+        processes = discovery_results.get('processes', [])
+        
+        # Detect deployment patterns
+        for process in processes:
+            if 'nginx' in process.command.lower():
+                deployment_intel['web_server'] = 'nginx'
+            elif 'systemd' in process.command.lower():
+                deployment_intel['service_management'] = 'systemd'
+            elif 'docker' in process.command.lower():
+                deployment_intel['containerization'] = True
+        
+        # Extract environment variables
+        enhanced_files = discovery_results.get('files', [])
+        for file_info in enhanced_files:
+            if hasattr(file_info, 'environment_variables') and file_info.environment_variables:
+                deployment_intel['environment_setup'].extend(file_info.environment_variables)
+        
+        return deployment_intel
+    
     def _perform_basic_discovery(self, host: str) -> Dict[str, Any]:
-        """Perform basic discovery without AI."""
+        """Perform basic discovery without AI (fallback)."""
         logger.info("[ANALYZER] Performing basic discovery")
         
         # Get basic process list
@@ -306,11 +379,11 @@ class InfrastructureAnalyzer:
         lang_map = {'.py': 'Python', '.js': 'JavaScript', '.java': 'Java'}
         return lang_map.get(extension, 'Unknown')
     
-    def _create_scan_report(self, host: str, scan_id: str, timestamp: str, 
-                           scan_duration: float, discovery_results: Dict[str, Any],
-                           analysis_config: AnalysisConfig) -> ScanReport:
-        """Create comprehensive scan report."""
-        logger.info("[ANALYZER] Creating scan report")
+    def _create_enhanced_scan_report(self, host: str, scan_id: str, timestamp: str, 
+                                   scan_duration: float, discovery_results: Dict[str, Any],
+                                   analysis_config: AnalysisConfig) -> EnhancedScanReport:
+        """Create enhanced scan report with business intelligence."""
+        logger.info("[ANALYZER] Creating enhanced scan report")
         
         # Extract infrastructure insights
         insights_data = discovery_results.get('infrastructure_insights', {})
@@ -333,6 +406,7 @@ class InfrastructureAnalyzer:
             "files_analyzed": len(discovery_results.get('files', [])),
             "analysis_depth": analysis_config.scan_depth,
             "ai_enabled": analysis_config.enable_ai,
+            "business_intelligence_enabled": analysis_config.enable_business_intelligence,
             "total_commands_executed": len(self.ssh_connector.command_history)
         }
         
@@ -343,7 +417,10 @@ class InfrastructureAnalyzer:
             {"stage": "analysis", "status": "completed", "timestamp": timestamp}
         ]
         
-        scan_report = ScanReport(
+        if discovery_results.get('business_intelligence'):
+            analysis_stages.append({"stage": "business_intelligence", "status": "completed", "timestamp": timestamp})
+        
+        scan_report = EnhancedScanReport(
             host=host,
             scan_id=scan_id,
             timestamp=timestamp,
@@ -352,49 +429,68 @@ class InfrastructureAnalyzer:
             application_files=discovery_results.get('files', []),
             infrastructure_insights=infrastructure_insights,
             security_analysis=discovery_results.get('security_analysis', {}),
+            business_intelligence=discovery_results.get('business_intelligence'),
+            api_documentation=discovery_results.get('api_documentation'),
+            deployment_intelligence=discovery_results.get('deployment_intelligence'),
             llm_analysis_summary=discovery_results.get('llm_analysis_summary', {}),
             scan_statistics=scan_statistics,
             analysis_stages=analysis_stages
         )
         
-        logger.info("[ANALYZER] Scan report created")
+        logger.info("[ANALYZER] Enhanced scan report created")
         return scan_report
     
-    def _generate_artifacts(self, scan_report: ScanReport, output_dir: Path, 
-                           config: AnalysisConfig) -> List[str]:
-        """Generate analysis artifacts."""
-        logger.info("[ANALYZER] Generating analysis artifacts")
+    def _generate_enhanced_artifacts(self, scan_report: EnhancedScanReport, output_dir: Path, 
+                                   config: AnalysisConfig) -> List[str]:
+        """Generate enhanced analysis artifacts."""
+        logger.info("[ANALYZER] Generating enhanced analysis artifacts")
         
         artifacts = []
         
-        # Generate JSON report
+        # Generate Enhanced JSON report
         json_file = output_dir / f"infradoc_scan_{scan_report.scan_id}.json"
-        with open(json_file, 'w') as f:
+        with open(json_file, 'w', encoding='utf-8') as f:
             # Convert dataclasses to dicts for JSON serialization
-            report_dict = self._scan_report_to_dict(scan_report)
+            report_dict = self._enhanced_scan_report_to_dict(scan_report)
             json.dump(report_dict, f, indent=2, default=str)
         artifacts.append(str(json_file))
         
-        # Generate markdown summary
+        # Generate enhanced markdown summary
         if "markdown" in (config.output_formats or ["json", "markdown"]):
             md_file = output_dir / f"infrastructure_analysis_{scan_report.scan_id}.md"
-            markdown_content = self._generate_markdown_report(scan_report)
-            with open(md_file, 'w') as f:
+            markdown_content = self._generate_enhanced_markdown_report(scan_report)
+            with open(md_file, 'w', encoding='utf-8') as f:
                 f.write(markdown_content)
             artifacts.append(str(md_file))
         
         # Generate detailed text report
         txt_file = output_dir / f"detailed_analysis_{scan_report.scan_id}.txt"
-        text_content = self._generate_text_report(scan_report)
-        with open(txt_file, 'w') as f:
+        text_content = self._generate_enhanced_text_report(scan_report)
+        with open(txt_file, 'w', encoding='utf-8') as f:
             f.write(text_content)
         artifacts.append(str(txt_file))
         
-        logger.info(f"[ANALYZER] Generated {len(artifacts)} artifacts")
+        # Generate API documentation if available
+        if scan_report.api_documentation:
+            api_file = output_dir / f"api_documentation_{scan_report.scan_id}.md"
+            api_content = self._generate_api_documentation_file(scan_report)
+            with open(api_file, 'w', encoding='utf-8') as f:
+                f.write(api_content)
+            artifacts.append(str(api_file))
+        
+        # Generate business intelligence report if available
+        if scan_report.business_intelligence:
+            business_file = output_dir / f"business_intelligence_{scan_report.scan_id}.md"
+            business_content = self._generate_business_intelligence_report(scan_report)
+            with open(business_file, 'w', encoding='utf-8') as f:
+                f.write(business_content)
+            artifacts.append(str(business_file))
+        
+        logger.info(f"[ANALYZER] Generated {len(artifacts)} enhanced artifacts")
         return artifacts
     
-    def _scan_report_to_dict(self, scan_report: ScanReport) -> Dict[str, Any]:
-        """Convert scan report to dictionary for JSON serialization."""
+    def _enhanced_scan_report_to_dict(self, scan_report: EnhancedScanReport) -> Dict[str, Any]:
+        """Convert enhanced scan report to dictionary for JSON serialization."""
         return {
             "host": scan_report.host,
             "scan_id": scan_report.scan_id,
@@ -404,52 +500,80 @@ class InfrastructureAnalyzer:
             "application_files": [asdict(f) for f in scan_report.application_files],
             "infrastructure_insights": asdict(scan_report.infrastructure_insights),
             "security_analysis": scan_report.security_analysis,
+            "business_intelligence": scan_report.business_intelligence,
+            "api_documentation": scan_report.api_documentation,
+            "deployment_intelligence": scan_report.deployment_intelligence,
             "llm_analysis_summary": scan_report.llm_analysis_summary,
             "scan_statistics": scan_report.scan_statistics,
             "analysis_stages": scan_report.analysis_stages
         }
     
-    def _generate_markdown_report(self, scan_report: ScanReport) -> str:
-        """Generate markdown analysis report."""
-        content = f"""# Infrastructure Analysis Report
+    def _generate_enhanced_markdown_report(self, scan_report: EnhancedScanReport) -> str:
+        """Generate enhanced markdown analysis report."""
+        content = f"""# 🧠 Intelligent Infrastructure Analysis Report
 
-## Overview
+## 📊 Overview
 - **Host**: {scan_report.host}
 - **Scan ID**: {scan_report.scan_id}
 - **Analysis Date**: {scan_report.timestamp[:10]}
 - **Duration**: {scan_report.scan_duration:.2f} seconds
 
-## Summary
+## 🎯 Executive Summary
 - **Processes Analyzed**: {len(scan_report.processes)}
 - **Files Discovered**: {len(scan_report.application_files)}
 - **Architecture Pattern**: {scan_report.infrastructure_insights.architecture_pattern}
 - **Security Posture**: {scan_report.infrastructure_insights.security_posture}
 
-## Technology Stack
+## 🔧 Technology Stack
 """
         for tech in scan_report.infrastructure_insights.technology_stack:
             content += f"- {tech}\n"
         
+        # Add business intelligence section if available
+        if scan_report.business_intelligence:
+            content += f"""
+## 🏢 Business Intelligence
+- **Domain**: {scan_report.business_intelligence.get('business_domain', 'Unknown')}
+- **Primary Purpose**: {scan_report.business_intelligence.get('application_purpose', 'Not determined')}
+
+### Key Business Functions
+"""
+            for func in scan_report.business_intelligence.get('primary_business_functions', []):
+                content += f"- {func}\n"
+        
+        # Add API documentation section if available
+        if scan_report.api_documentation and scan_report.api_documentation.get('endpoints'):
+            content += f"""
+## 🌐 API Endpoints
+| Method | Endpoint | Handler | Description |
+|--------|----------|---------|-------------|
+"""
+            for endpoint in scan_report.api_documentation['endpoints'][:10]:  # Top 10
+                method = endpoint.get('method', 'GET')
+                path = endpoint.get('path', '/')
+                handler = endpoint.get('handler_function', 'Unknown')
+                description = endpoint.get('description', '')
+                content += f"| `{method}` | `{path}` | `{handler}` | {description} |\n"
+        
         content += f"""
-## Key Processes
+## 🔍 Key Processes
 """
         for proc in scan_report.processes[:10]:
             content += f"- **PID {proc.pid}**: {proc.name} ({proc.service_classification})\n"
         
         content += f"""
-## Application Files
+## 📁 Application Files
 """
         file_types = {}
         for file in scan_report.application_files:
-            if file.language not in file_types:
-                file_types[file.language] = 0
-            file_types[file.language] += 1
+            lang = file.language
+            file_types[lang] = file_types.get(lang, 0) + 1
         
         for lang, count in file_types.items():
             content += f"- **{lang}**: {count} files\n"
         
         content += f"""
-## Recommendations
+## 💡 Recommendations
 """
         for rec in scan_report.infrastructure_insights.recommendations:
             content += f"- {rec}\n"
@@ -457,15 +581,16 @@ class InfrastructureAnalyzer:
         content += f"""
 
 ---
-*Generated by InfraDoc 2.0 - Intelligent Infrastructure Analysis*
+*🤖 Generated by InfraDoc 2.0 - Intelligent Infrastructure Analysis*  
+*"Developers just develop, we'll document"*
 """
         return content
     
-    def _generate_text_report(self, scan_report: ScanReport) -> str:
-        """Generate detailed text report."""
+    def _generate_enhanced_text_report(self, scan_report: EnhancedScanReport) -> str:
+        """Generate enhanced detailed text report."""
         content = f"""
-INFRADOC 2.0 - DETAILED INFRASTRUCTURE ANALYSIS REPORT
-======================================================
+INFRADOC 2.0 - INTELLIGENT INFRASTRUCTURE ANALYSIS REPORT
+=========================================================
 
 SCAN INFORMATION
 ================
@@ -474,8 +599,8 @@ Scan ID: {scan_report.scan_id}
 Timestamp: {scan_report.timestamp}
 Duration: {scan_report.scan_duration:.2f} seconds
 
-ANALYSIS SUMMARY
-================
+EXECUTIVE SUMMARY
+=================
 Processes Analyzed: {len(scan_report.processes)}
 Files Discovered: {len(scan_report.application_files)}
 Architecture Pattern: {scan_report.infrastructure_insights.architecture_pattern}
@@ -488,6 +613,25 @@ TECHNOLOGY STACK
         
         for i, tech in enumerate(scan_report.infrastructure_insights.technology_stack, 1):
             content += f"\n{i}. {tech}"
+        
+        # Add business intelligence section if available
+        if scan_report.business_intelligence:
+            content += f"""
+
+BUSINESS INTELLIGENCE
+=====================
+Business Domain: {scan_report.business_intelligence.get('business_domain', 'Unknown')}
+Application Purpose: {scan_report.business_intelligence.get('application_purpose', 'Not determined')}
+
+Primary Business Functions:"""
+            for func in scan_report.business_intelligence.get('primary_business_functions', []):
+                content += f"\n- {func}"
+            
+            content += f"""
+
+Critical Workflows:"""
+            for workflow in scan_report.business_intelligence.get('critical_workflows', []):
+                content += f"\n- {workflow}"
         
         content += f"""
 
@@ -506,8 +650,8 @@ Command: {proc.command[:100]}...
         
         content += f"""
 
-DISCOVERED FILES
-================"""
+ENHANCED APPLICATION FILES
+==========================="""
         
         for file in scan_report.application_files[:20]:
             content += f"""
@@ -515,6 +659,9 @@ Path: {file.path}
 Language: {file.language}
 Size: {file.size} bytes
 Modified: {file.last_modified}
+Business Logic: {getattr(file, 'business_logic_summary', 'Not analyzed')[:200]}
+API Endpoints: {len(getattr(file, 'api_endpoints', []))}
+Security Concerns: {len(getattr(file, 'security_concerns', []))}
 """
         
         content += f"""
@@ -542,6 +689,7 @@ SCAN STATISTICS
 Commands Executed: {scan_report.scan_statistics.get('total_commands_executed', 0)}
 Analysis Depth: {scan_report.scan_statistics.get('analysis_depth', 'standard')}
 AI Enabled: {scan_report.scan_statistics.get('ai_enabled', False)}
+Business Intelligence: {scan_report.scan_statistics.get('business_intelligence_enabled', False)}
 
 ---
 Generated by InfraDoc 2.0 - Intelligent Infrastructure Analysis
@@ -549,43 +697,218 @@ Analysis completed at {datetime.now().isoformat()}
 """
         return content
     
-    def _generate_documentation(self, scan_report: ScanReport, output_dir: Path) -> bool:
-        """Generate comprehensive documentation."""
-        logger.info("[ANALYZER] Generating comprehensive documentation")
+    def _generate_api_documentation_file(self, scan_report: EnhancedScanReport) -> str:
+        """Generate API documentation file."""
+        api_docs = scan_report.api_documentation
+        
+        content = f"""# 🌐 API Documentation
+
+## Overview
+This document describes the APIs discovered in the analyzed infrastructure.
+
+## Base URL
+```
+{api_docs.get('base_url', 'http://localhost')}
+```
+
+## Endpoints
+
+"""
+        
+        for endpoint in api_docs.get('endpoints', []):
+            method = endpoint.get('method', 'GET')
+            path = endpoint.get('path', '/')
+            handler = endpoint.get('handler_function', 'Unknown')
+            description = endpoint.get('description', 'No description available')
+            parameters = endpoint.get('parameters', [])
+            
+            content += f"""### `{method} {path}`
+**Handler**: `{handler}`  
+**Description**: {description}
+
+"""
+            if parameters:
+                content += "**Parameters**:\n"
+                for param in parameters:
+                    content += f"- `{param}`\n"
+                content += "\n"
+            
+            content += f"""**Example Request**:
+```bash
+curl -X {method} '{api_docs.get('base_url', 'http://localhost')}{path}'
+```
+
+"""
+        
+        # Add data models if available
+        if api_docs.get('models'):
+            content += "## Data Models\n\n"
+            for model in api_docs['models']:
+                model_name = model.get('model_name', 'Unknown')
+                fields = model.get('fields', [])
+                
+                content += f"### {model_name}\n"
+                if fields:
+                    content += "| Field | Type | Description |\n"
+                    content += "|-------|------|-------------|\n"
+                    for field in fields:
+                        field_name = field.get('name', 'unknown')
+                        field_type = field.get('type', 'unknown')
+                        field_desc = field.get('description', '')
+                        content += f"| `{field_name}` | `{field_type}` | {field_desc} |\n"
+                content += "\n"
+        
+        content += f"""
+---
+*Auto-generated API documentation by InfraDoc 2.0*
+"""
+        return content
+    
+    def _generate_business_intelligence_report(self, scan_report: EnhancedScanReport) -> str:
+        """Generate business intelligence report."""
+        bi = scan_report.business_intelligence
+        
+        content = f"""# 🏢 Business Intelligence Report
+
+## Executive Summary
+- **Business Domain**: {bi.get('business_domain', 'Unknown')}
+- **Application Purpose**: {bi.get('application_purpose', 'Not determined')}
+
+## Business Analysis
+
+### Primary Business Functions
+"""
+        for func in bi.get('primary_business_functions', []):
+            content += f"- {func}\n"
+        
+        content += f"""
+### Critical Business Workflows
+"""
+        for workflow in bi.get('critical_workflows', []):
+            content += f"- {workflow}\n"
+        
+        # Add data flows if available
+        if bi.get('data_flows'):
+            content += f"""
+## Data Flow Analysis
+| From | To | Data Type | Description |
+|------|-----|-----------|-------------|
+"""
+            for flow in bi['data_flows']:
+                from_src = flow.get('from', 'Unknown')
+                to_dest = flow.get('to', 'Unknown')
+                data_type = flow.get('data_type', 'Unknown')
+                description = flow.get('description', '')
+                content += f"| {from_src} | {to_dest} | {data_type} | {description} |\n"
+        
+        # Add integration architecture if available
+        if bi.get('integration_architecture'):
+            ia = bi['integration_architecture']
+            content += f"""
+## Integration Architecture
+
+### External APIs
+"""
+            for api in ia.get('external_apis', []):
+                content += f"- {api}\n"
+            
+            content += f"""
+### Databases
+"""
+            for db in ia.get('databases', []):
+                content += f"- {db}\n"
+            
+            content += f"""
+### Message Queues
+"""
+            for queue in ia.get('message_queues', []):
+                content += f"- {queue}\n"
+        
+        # Add scaling characteristics if available
+        if bi.get('scaling_characteristics'):
+            sc = bi['scaling_characteristics']
+            content += f"""
+## Scaling Characteristics
+
+### Potential Bottlenecks
+"""
+            for bottleneck in sc.get('bottlenecks', []):
+                content += f"- {bottleneck}\n"
+            
+            content += f"""
+### Scaling Strategy
+{sc.get('scaling_strategy', 'Not determined')}
+
+### Resource Intensive Operations
+"""
+            for operation in sc.get('resource_intensive_operations', []):
+                content += f"- {operation}\n"
+        
+        content += f"""
+---
+*Business intelligence extracted by InfraDoc 2.0*
+"""
+        return content
+    
+    def _generate_intelligent_documentation(self, scan_report: EnhancedScanReport, output_dir: Path) -> bool:
+        """Generate intelligent comprehensive documentation."""
+        logger.info("[ANALYZER] Generating intelligent comprehensive documentation")
         
         try:
-            # Import documentation generator
-            from infradoc_docs import DocumentationGenerator
+            # Import intelligent documentation generator
+            from infradoc_docs import IntelligentDocumentationGenerator
             
-            doc_generator = DocumentationGenerator(scan_report, str(output_dir))
-            success = doc_generator.generate_all_documentation()
+            doc_generator = IntelligentDocumentationGenerator(scan_report, str(output_dir))
+            success = doc_generator.generate_intelligent_documentation()
             
             if success:
-                logger.info("[ANALYZER] Documentation generated successfully")
+                logger.info("[ANALYZER] Intelligent documentation generated successfully")
             else:
-                logger.warning("[ANALYZER] Documentation generation had issues")
+                logger.warning("[ANALYZER] Intelligent documentation generation had issues")
             
             return success
             
         except ImportError:
-            logger.warning("[ANALYZER] Documentation generator not available")
-            return False
+            logger.warning("[ANALYZER] Intelligent documentation generator not available, using basic generator")
+            try:
+                from infradoc_docs import DocumentationGenerator
+                doc_generator = DocumentationGenerator(scan_report, str(output_dir))
+                return doc_generator.generate_all_documentation()
+            except ImportError:
+                logger.warning("[ANALYZER] No documentation generator available")
+                return False
         except Exception as e:
-            logger.error(f"[ANALYZER] Documentation generation failed: {e}")
+            logger.error(f"[ANALYZER] Intelligent documentation generation failed: {e}")
             return False
     
     def _log_analysis_summary(self, result: AnalysisResult):
-        """Log analysis completion summary."""
+        """Log intelligent analysis completion summary."""
         if result.success:
-            logger.info("[ANALYZER] ANALYSIS COMPLETED SUCCESSFULLY")
+            logger.info("[ANALYZER] INTELLIGENT ANALYSIS COMPLETED SUCCESSFULLY")
             logger.info(f"[ANALYZER] Processes: {len(result.scan_report.processes)}")
             logger.info(f"[ANALYZER] Files: {len(result.scan_report.application_files)}")
             logger.info(f"[ANALYZER] Architecture: {result.scan_report.infrastructure_insights.architecture_pattern}")
             logger.info(f"[ANALYZER] Artifacts: {len(result.artifacts_generated)}")
             logger.info(f"[ANALYZER] Documentation: {'YES' if result.documentation_generated else 'NO'}")
+            
+            if result.scan_report.business_intelligence:
+                domain = result.scan_report.business_intelligence.get('business_domain', 'Unknown')
+                logger.info(f"[ANALYZER] Business Domain: {domain}")
+            
+            if result.scan_report.api_documentation:
+                endpoint_count = len(result.scan_report.api_documentation.get('endpoints', []))
+                logger.info(f"[ANALYZER] API Endpoints: {endpoint_count}")
+            
             logger.info(f"[ANALYZER] Output: {result.output_directory}")
         else:
-            logger.error(f"[ANALYZER] ANALYSIS FAILED: {result.error_message}")
+            logger.error(f"[ANALYZER] INTELLIGENT ANALYSIS FAILED: {result.error_message}")
+
+# ================================================================================
+# COMPATIBILITY LAYER FOR EXISTING CODE
+# ================================================================================
+
+# Keep original class for backward compatibility
+InfrastructureAnalyzer = IntelligentInfrastructureAnalyzer
 
 # ================================================================================
 # CONVENIENCE FUNCTIONS
@@ -595,17 +918,7 @@ def quick_analysis(host: str, username: str = "ubuntu", key_file: str = None,
                   password: str = None) -> AnalysisResult:
     """
     Perform quick infrastructure analysis with minimal configuration.
-    
-    Args:
-        host: Target hostname or IP
-        username: SSH username
-        key_file: Path to SSH private key
-        password: SSH password (if not using key)
-        
-    Returns:
-        Analysis result
     """
-    # Configure connection
     connection_config = ConnectionConfig(
         host=host,
         username=username,
@@ -613,7 +926,6 @@ def quick_analysis(host: str, username: str = "ubuntu", key_file: str = None,
         password=password
     )
     
-    # Configure analysis for quick scan
     analysis_config = AnalysisConfig(
         scan_depth="quick",
         enable_ai=True,
@@ -621,36 +933,23 @@ def quick_analysis(host: str, username: str = "ubuntu", key_file: str = None,
         include_documentation=False
     )
     
-    # Determine LLM providers
     llm_providers = []
     if os.getenv("OPENAI_API_KEY"):
         llm_providers.append({"provider": "openai", "model": "gpt-4o"})
     if os.getenv("ANTHROPIC_API_KEY"):
         llm_providers.append({"provider": "claude", "model": "claude-3-5-sonnet-20241022"})
     
-    # Initialize and run analyzer
-    analyzer = InfrastructureAnalyzer(llm_providers)
+    analyzer = IntelligentInfrastructureAnalyzer(llm_providers)
     try:
         return analyzer.analyze_infrastructure(connection_config, analysis_config)
     finally:
-        # Ensure cleanup
         analyzer._cleanup_resources()
 
 def deep_analysis(host: str, username: str = "ubuntu", key_file: str = None, 
                  password: str = None) -> AnalysisResult:
     """
     Perform comprehensive deep infrastructure analysis.
-    
-    Args:
-        host: Target hostname or IP
-        username: SSH username
-        key_file: Path to SSH private key
-        password: SSH password (if not using key)
-        
-    Returns:
-        Analysis result
     """
-    # Configure connection
     connection_config = ConnectionConfig(
         host=host,
         username=username,
@@ -658,7 +957,6 @@ def deep_analysis(host: str, username: str = "ubuntu", key_file: str = None,
         password=password
     )
     
-    # Configure analysis for deep scan
     analysis_config = AnalysisConfig(
         scan_depth="deep",
         enable_ai=True,
@@ -667,20 +965,52 @@ def deep_analysis(host: str, username: str = "ubuntu", key_file: str = None,
         include_security=True
     )
     
-    # Determine LLM providers
     llm_providers = []
-    if os.getenv("GROK_API_KEY"):
-        llm_providers.append({"provider": "grok", "model": "grok-3"})
     if os.getenv("OPENAI_API_KEY"):
-        llm_providers.append({"provider": "openai", "model": "gpt-4o-mini"})
+        llm_providers.append({"provider": "openai", "model": "gpt-4o"})
     if os.getenv("ANTHROPIC_API_KEY"):
         llm_providers.append({"provider": "claude", "model": "claude-3-5-sonnet-20241022"})
+    if os.getenv("GROK_API_KEY"):
+        llm_providers.append({"provider": "grok", "model": "grok-3"})
     
-    
-    # Initialize and run analyzer
-    analyzer = InfrastructureAnalyzer(llm_providers)
+    analyzer = IntelligentInfrastructureAnalyzer(llm_providers)
     try:
         return analyzer.analyze_infrastructure(connection_config, analysis_config)
     finally:
-        # Ensure cleanup
+        analyzer._cleanup_resources()
+
+def intelligent_analysis(host: str, username: str = "ubuntu", key_file: str = None, 
+                        password: str = None) -> AnalysisResult:
+    """
+    Perform intelligent infrastructure analysis with business understanding.
+    """
+    connection_config = ConnectionConfig(
+        host=host,
+        username=username,
+        key_file=key_file,
+        password=password
+    )
+    
+    analysis_config = AnalysisConfig(
+        scan_depth="intelligent",
+        enable_ai=True,
+        max_llm_calls=35,
+        include_documentation=True,
+        include_security=True,
+        enable_business_intelligence=True,
+        enable_enhanced_analysis=True
+    )
+    
+    llm_providers = []
+    if os.getenv("OPENAI_API_KEY"):
+        llm_providers.append({"provider": "openai", "model": "gpt-4o"})
+    if os.getenv("ANTHROPIC_API_KEY"):
+        llm_providers.append({"provider": "claude", "model": "claude-3-5-sonnet-20241022"})
+    if os.getenv("GROK_API_KEY"):
+        llm_providers.append({"provider": "grok", "model": "grok-3"})
+    
+    analyzer = IntelligentInfrastructureAnalyzer(llm_providers)
+    try:
+        return analyzer.analyze_infrastructure(connection_config, analysis_config)
+    finally:
         analyzer._cleanup_resources()
